@@ -1,111 +1,4 @@
-DROP DATABASE IF EXISTS ucu_reservas;
-CREATE DATABASE ucu_reservas DEFAULT CHARACTER SET utf8 COLLATE utf8_spanish_ci;
-
 USE ucu_reservas;
-
-CREATE TABLE participantes (
-    ci CHAR(8) NOT NULL, -- para el formato de cedula!
-    nombre VARCHAR(50) NOT NULL,
-    apellido VARCHAR(50) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-
-    PRIMARY KEY (ci)
-);
-
-CREATE TABLE login (
-    email VARCHAR(150) NOT NULL,
-    password VARCHAR(50) NOT NULL,
-    PRIMARY KEY (email), -- no pueden haber dos emails iguales
-    FOREIGN KEY (email) REFERENCES participantes(email)
-);
-
-CREATE TABLE facultad (
-    id_facultad INT AUTO_INCREMENT NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-
-    PRIMARY KEY (id_facultad)
-);
-
-CREATE TABLE programas_academicos (
-    nombre_programa VARCHAR(150) NOT NULL,
-    id_facultad INT NOT NULL,
-    tipo ENUM('Grado', 'Posgrado') NOT NULL,
-
-    PRIMARY KEY (nombre_programa),
-    FOREIGN KEY (id_facultad) REFERENCES facultad(id_facultad)
-
-);
-
-CREATE TABLE participantes_programa_academico (
-    id_alumno_programa INT NOT NULL,
-    ci_participante CHAR(8) NOT NULL,
-    nombre_programa VARCHAR(150) NOT NULL,
-    rol ENUM('Estudiante', 'Docente'),
-
-    PRIMARY KEY (id_alumno_programa),
-    FOREIGN KEY (ci_participante) REFERENCES participantes(ci),
-    FOREIGN KEY (nombre_programa) REFERENCES programas_academicos(nombre_programa)
-);
-
-CREATE TABLE edificio (
-    nombre_edificio VARCHAR(100) NOT NULL,
-    direccion VARCHAR(300) NOT NULL,
-    departamento VARCHAR(100) NOT NULL,
-
-    PRIMARY KEY (nombre_edificio)
-);
-
-CREATE TABLE sala (
-    nombre_sala VARCHAR(100) NOT NULL,
-    edificio VARCHAR(100) NOT NULL,
-    capacidad SMALLINT,
-    tipo_sala ENUM('Libre', 'Posgrado', 'Docente'),
-
-    PRIMARY KEY (nombre_sala, edificio),
-    FOREIGN KEY (edificio) REFERENCES edificio(nombre_edificio)
-);
-
-CREATE TABLE turno (
-    id_turno INT AUTO_INCREMENT NOT NULL,
-    hora_inicio TIME NOT NULL,
-    hora_fin TIME NOT NULL,
-
-    PRIMARY KEY (id_turno)
-);
-
-CREATE TABLE reserva (
-    id_reserva INT AUTO_INCREMENT NOT NULL,
-    nombre_sala VARCHAR(100) NOT NULL,
-    edificio VARCHAR(100) NOT NULL,
-    fecha DATE NOT NULL,
-    id_turno INT NOT NULL,
-    ESTADO ENUM('Activa', 'Cancelada', 'Sin Asistencia', 'Finalizada'),
-
-    PRIMARY KEY (id_reserva),
-    FOREIGN KEY (nombre_sala, edificio) REFERENCES sala(nombre_sala,edificio),
-    FOREIGN KEY (id_turno) REFERENCES turno(id_turno)
-);
-
-CREATE TABLE reserva_participante (
-    ci_participante CHAR(8) NOT NULL,
-    id_reserva INT NOT NULL,
-    fecha_solicitud_reserva DATE NOT NULL,
-    asistencia BOOLEAN DEFAULT FALSE,
-
-    PRIMARY KEY (ci_participante, id_reserva),
-    FOREIGN KEY (ci_participante) REFERENCES participantes(ci),
-    FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva)
-);
-
-CREATE TABLE sancion_participante (
-    id_sancion INT AUTO_INCREMENT,
-    ci_participante CHAR(8) NOT NULL,
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NOT NULL,
-
-    PRIMARY KEY (id_sancion),
-    FOREIGN KEY (ci_participante) REFERENCES participantes(ci)
-);
 
 DELIMITER // -- necesito cambiar el delimitador para que entienda bien!
 
@@ -113,7 +6,7 @@ CREATE TRIGGER validar_fecha_reserva_insert -- para que la fecha a reservar sea 
 BEFORE INSERT ON reserva
 FOR EACH ROW
 BEGIN
-    IF NEW.fecha < CURDATE() THEN
+    IF NEW.fecha < CURDATE() THEN -- si la fecha a ingresar es menor que la actual
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'No se puede registrar una reserva en una fecha pasada.';
     END IF;
@@ -283,6 +176,61 @@ END //
 
 DELIMITER ;
 
+-- reservas semanales
 
+DELIMITER //
 
+CREATE TRIGGER limitar_reservas_semanales
+BEFORE INSERT ON reserva_participante
+FOR EACH ROW -- se ejecuta una vez por cada fila que se intente insertar. Si alguien hace un INSERT INTO reserva_participante ..., este trigger “intercepta” la operación y revisa las condiciones.
+BEGIN -- BEGIN marca el comienzo de un bloque lógico que puede contener varias sentencias SQL
 
+    -- Declaración de variables:
+    DECLARE v_tipo_sala ENUM('Libre', 'Posgrado', 'Docente');
+    DECLARE v_rol ENUM('Estudiante', 'Docente');
+    DECLARE v_tipo_programa ENUM('Grado', 'Posgrado');
+    DECLARE v_cant INT;
+    DECLARE v_fecha DATE;
+
+    -- obtener los datos de la reserva actual: consultar información adicional sobre ella (la fecha y el tipo de sala) que el trigger necesita para aplicar las reglas de negocio.
+    -- Usa el id_reserva de la nueva fila que se quiere insertar (NEW.id_reserva).
+    -- Busca en las tablas reserva y sala los datos asociados: la fecha de la reserva y el tipo de sala.
+    -- Guarda esos valores en las variables v_fecha y v_tipo_sala.
+
+    SELECT r.fecha, s.tipo_sala
+      INTO v_fecha, v_tipo_sala -- guarda los valores en las variables!
+      FROM reserva r
+      JOIN sala s
+        ON r.nombre_sala = s.nombre_sala AND r.edificio = s.edificio
+     WHERE r.id_reserva = NEW.id_reserva; -- el id_reserva ya debia existir en reservas
+
+    -- Obtener datos del participante: Toma el ci_participante del nuevo registro.
+    -- Busca su rol y tipo de programa (por ejemplo: “Estudiante” de “Grado”).
+    -- Guarda esos valores en las variables v_rol y v_tipo_programa.
+
+    SELECT ppa.rol, pa.tipo  -- docente alumno || posgrado grado
+      INTO v_rol, v_tipo_programa
+      FROM participantes_programa_academico ppa
+      JOIN programas_academicos pa
+        ON ppa.nombre_programa = pa.nombre_programa
+     WHERE ppa.ci_participante = NEW.ci_participante -- info que tengo del participante
+     LIMIT 1;
+
+    -- Contar cuántas reservas activas tiene esa persona en la semana
+    -- Se cuentan todas las reservas activas (r.estado = 'Activa') que ese mismo participante (rp.ci_participante) tiene en la misma semana que la nueva reserva.
+    SELECT COUNT(*)
+      INTO v_cant -- lo guarda en la variable v_cant
+      FROM reserva_participante rp
+      JOIN reserva r ON rp.id_reserva = r.id_reserva
+     WHERE rp.ci_participante = NEW.ci_participante -- compara por cedula
+       AND YEARWEEK(r.fecha, 1) = YEARWEEK(v_fecha, 1) -- misma semana! YEARWEEK(r.fecha, 1) obtiene el número de semana del año (ISO estándar).
+       AND r.estado = 'Activa';
+
+    -- validar regla del negocio:
+
+    IF (v_tipo_sala = 'Libre' AND v_rol = 'Estudiante' AND v_tipo_programa = 'Grado' AND v_cant >= 3) THEN
+        SIGNAL SQLSTATE '45000' -- SIGNAL SQLSTATE '45000' → interrumpe la inserción y muestra el mensaje de error personalizado.
+        SET MESSAGE_TEXT = 'El participante no puede tener más de 3 reservas activas en la misma semana.';
+    END IF;
+END //
+DELIMITER ;
