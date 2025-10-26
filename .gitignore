@@ -1,1 +1,13 @@
+# Ignorar entorno virtual
+backend/.venv/
+
+# Ignorar archivos sensibles
+backend/.env
+
+# Ignorar caché de Python
+__pycache__/
+*.pyc
+
+# Ignorar archivos de IDE
 .idea/
+.vscode/
