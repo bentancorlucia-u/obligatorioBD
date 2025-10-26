@@ -3,6 +3,7 @@ backend/.venv/
 
 # Ignorar archivos sensibles
 backend/.env
+sql/grants_local.sql
 
 # Ignorar caché de Python
 __pycache__/
