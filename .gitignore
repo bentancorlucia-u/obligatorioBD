@@ -1,5 +1,8 @@
 # Ignorar entorno virtual
 backend/.venv/
+backend/venv/
+.venv/
+venv/
 
 # Ignorar archivos sensibles
 backend/.env
