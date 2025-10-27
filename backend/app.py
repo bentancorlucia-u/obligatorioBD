@@ -1,42 +1,27 @@
-from flask import Flask, jsonify, request
-from db_conexion import conexion
+from flask import Flask, jsonify
+from database import get_connection
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route('/')
 def home():
-    return "Servidor Flask conectado a la base ucu_reservas ✅"
+    return jsonify({"message": "Sistema de Reservas UCU activo 🚀"})
 
-@app.route("/reservas", methods=["GET"])
-def listar_reservas():
-    conexion = conexion()
-    if not conexion:
-        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
+@app.route('/test-db')
+def test_db():
+    connection = get_connection()
+    if connection:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) AS total FROM participantes;")
+        result = cursor.fetchone()
+        cursor.close()
+        connection.close()
+        return jsonify({
+            "message": "Conexión a la base de datos exitosa ✅",
+            "total_participantes": result["total"]
+        })
+    else:
+        return jsonify({"error": "No se pudo conectar a la base de datos ❌"}), 500
 
-    cursor = conexion.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM reserva")
-    reservas = cursor.fetchall()
-    cursor.close()
-    conexion.close()
-
-    return jsonify(reservas)
-
-@app.route("/reservas", methods=["POST"])
-def crear_reserva():
-    data = request.json
-    connection = create_connection()
-    cursor = connection.cursor()
-    query = """
-        INSERT INTO reserva (nombre_sala, edificio, fecha, id_turno, estado)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    values = (data["nombre_sala"], data["edificio"], data["fecha"], data["id_turno"], "activa")
-    cursor.execute(query, values)
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify({"message": "✅ Reserva creada correctamente"})
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
