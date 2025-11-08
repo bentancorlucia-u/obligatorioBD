@@ -1,0 +1,22 @@
+
+// .rubik-<uniquifier> {
+//   font-family: "Rubik", sans-serif;
+//   font-optical-sizing: auto;
+//   font-weight: <weight>;
+//   font-style: normal;
+// }
+
+// bases
+
+@import './bases/variables';
+
+// componentes
+@import './componentes/login';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Rubik", sans-serif !important;
+    font-optical-sizing: auto;
+}

@@ -8,13 +8,12 @@ CREATE TABLE participantes (
     nombre VARCHAR(50) NOT NULL,
     apellido VARCHAR(50) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
-
     PRIMARY KEY (ci)
 );
 
 CREATE TABLE login (
     email VARCHAR(150) NOT NULL,
-    password VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     PRIMARY KEY (email), -- no pueden haber dos emails iguales
     FOREIGN KEY (email) REFERENCES participantes(email)
 );
@@ -111,9 +110,6 @@ CREATE TABLE sancion_participante (
 
 ALTER TABLE reserva ADD INDEX idx_fecha_turno (fecha, id_turno);
 ALTER TABLE sala ADD INDEX idx_tipo_sala (tipo_sala);
-
-
-
 
 
 
