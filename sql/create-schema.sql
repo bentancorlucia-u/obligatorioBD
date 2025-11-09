@@ -90,6 +90,7 @@ CREATE TABLE reserva_participante (
     id_reserva INT NOT NULL,
     fecha_solicitud_reserva DATE NOT NULL,
     asistencia BOOLEAN DEFAULT FALSE,
+    confirmado BOOLEAN DEFAULT TRUE,
 
     PRIMARY KEY (ci_participante, id_reserva),
     FOREIGN KEY (ci_participante) REFERENCES participantes(ci),

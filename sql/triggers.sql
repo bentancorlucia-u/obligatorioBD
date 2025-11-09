@@ -50,3 +50,25 @@ END//
 
 DELIMITER ;
 
+
+DELIMITER //
+CREATE TRIGGER check_reserva_cancelada
+AFTER UPDATE ON reserva_participante
+FOR EACH ROW
+BEGIN
+    DECLARE restantes INT;
+    IF NEW.confirmado = FALSE THEN
+        SELECT COUNT(*) INTO restantes
+        FROM reserva_participante
+        WHERE id_reserva = NEW.id_reserva AND confirmado = TRUE;
+
+        IF restantes = 0 THEN
+            UPDATE reserva
+            SET estado = 'cancelada'
+            WHERE id_reserva = NEW.id_reserva;
+        END IF;
+    END IF;
+END;
+//
+DELIMITER ;
+

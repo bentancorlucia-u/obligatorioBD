@@ -46,7 +46,7 @@ class modelReserva:
             cursor.execute("""
                 SELECT COUNT(*) AS ocupadas
                 FROM reserva
-                WHERE nombre_sala = %s AND edificio = %s AND fecha = %s AND id_turno = %s AND estado = 'activa';
+                WHERE nombre_sala = %s AND edificio = %s AND fecha = %s AND id_turno = %s AND estado = 'Activa';
             """, (reserva.nombre_sala, reserva.edificio, reserva.fecha, reserva.id_turno))
             if cursor.fetchone()["ocupadas"] > 0:
                 flash("La sala ya está reservada en ese turno", "warning")
@@ -58,7 +58,7 @@ class modelReserva:
                     SELECT COUNT(*) AS bloques
                     FROM reserva_participante rp
                     JOIN reserva r ON rp.id_reserva = r.id_reserva
-                    WHERE rp.ci_participante = %s AND r.fecha = %s AND r.estado = 'activa';
+                    WHERE rp.ci_participante = %s AND r.fecha = %s AND r.estado = 'Activa';
                 """, (current_user.ci, reserva.fecha))
                 if cursor.fetchone()["bloques"] >= 2:
                     flash("No puedes reservar más de 2 horas por día.", "error")
@@ -76,7 +76,7 @@ class modelReserva:
                     JOIN reserva r ON rp.id_reserva = r.id_reserva
                     WHERE rp.ci_participante = %s
                       AND r.fecha BETWEEN %s AND %s
-                      AND r.estado = 'activa';
+                      AND r.estado = 'Activa';
                 """, (current_user.ci, inicio_semana, fin_semana))
                 if cursor.fetchone()["cantidad"] >= 3:
                     flash("No puedes tener más de 3 reservas activas en la semana.", "error")
@@ -123,9 +123,6 @@ class modelReserva:
             cursor.execute(query, (ci,))
             reservas = cursor.fetchall()
 
-            if not reservas:
-                flash("No tenés reservas activas.", "info")
-
             return reservas
 
         except Exception as e:
@@ -139,7 +136,7 @@ class modelReserva:
         cursor.execute("""
             UPDATE reserva
             SET estado = %s
-            WHERE id_reserva = %s AND estado = 'activa';
+            WHERE id_reserva = %s AND estado = 'Activa';
         """, (reserva.estado, reserva.id_reserva))
         db.commit()
         return cursor.rowcount > 0

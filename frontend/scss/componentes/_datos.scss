@@ -144,7 +144,7 @@ tbody tr:hover {
 }
 
 /* Estado */
-td:last-child {
+.estado-activa {
   font-weight: 600;
   color: #198754;
 }
@@ -155,6 +155,35 @@ p {
   margin-top: 30px;
   font-size: 16px;
   color: #666;
+}
+
+/* Botón cancelar participación */
+.btn-cancelar {
+  background-color: #c0392b; // rojo elegante
+  color: $blanco;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &:hover {
+    background-color: darken(#c0392b, 8%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  }
 }
 
 /* Responsivo */

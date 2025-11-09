@@ -126,10 +126,10 @@ def reservar():
             edificio=edificio,
             fecha=fecha,
             id_turno=id_turno,
-            estado="activa"
+            estado="Activa"
         )
 
-        conn = get_connection("administrativo")  # conexión con permisos de escritura
+        conn = get_connection("login")  # conexión con permisos de escritura
         if conn:
             creada = modelReserva.crear_reserva(conn, reserva)
             conn.close()
@@ -167,23 +167,54 @@ def mis_reservas():
 
     return render_template("misreservas.html", usuario=current_user, reservas=reservas, participantes=participantes)
 
-@app.route("/cancelar_reserva/<int:id_reserva>", methods=["POST"])
+@app.route("/cancelar_participacion/<int:id_reserva>", methods=["POST"])
 @login_required
-def cancelar_reserva(id_reserva):
+def cancelar_participacion(id_reserva):
     conn = get_connection("login")
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM reserva WHERE id_reserva = %s;", (id_reserva,))
-    data = cursor.fetchone()
+    ci = current_user.ci  # o el campo que tengas para identificar al participante
 
-    if not data:
-        flash("Reserva no encontrada.", "error")
+    # Verificar que el participante pertenece a esa reserva
+    cursor.execute("""
+        SELECT * FROM reserva_participante
+        WHERE ci_participante = %s AND id_reserva = %s;
+    """, (ci, id_reserva))
+    participacion = cursor.fetchone()
+
+    if not participacion:
+        flash("No estás asociado a esta reserva.", "error")
+        conn.close()
         return redirect(url_for("mis_reservas"))
 
-    reserva = Reserva(**data)
-    exito, msg = reserva.cancelar()
-    if exito:
-        modelReserva.cancelar_reserva(conn, reserva)
-    flash(msg, "success" if exito else "warning")
+    # Marcar su participación como no confirmada
+    cursor.execute("""
+        UPDATE reserva_participante
+        SET confirmado = FALSE
+        WHERE ci_participante = %s AND id_reserva = %s;
+    """, (ci, id_reserva))
+    conn.commit()
+
+    # Verificar si quedan participantes confirmados
+    cursor.execute("""
+        SELECT COUNT(*) AS restantes
+        FROM reserva_participante
+        WHERE id_reserva = %s AND confirmado = TRUE;
+    """, (id_reserva,))
+    restantes = cursor.fetchone()["restantes"]
+
+    # Si no queda nadie confirmado, cancelar toda la reserva
+    if restantes == 0:
+        cursor.execute("""
+            UPDATE reserva
+            SET estado = 'cancelada'
+            WHERE id_reserva = %s;
+        """, (id_reserva,))
+        conn.commit()
+        flash("Se canceló toda la reserva porque no quedan participantes confirmados.", "warning")
+    else:
+        flash("Tu participación en la reserva fue cancelada.", "success")
+
+    conn.close()
     return redirect(url_for("mis_reservas"))
 
 @app.route("/sanciones", methods=["GET"])

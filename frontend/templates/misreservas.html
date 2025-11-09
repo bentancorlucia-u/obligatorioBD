@@ -1,65 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Reservas</title>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="datos">
 
+<body class="datos">
     <!-- Botón volver al inicio -->
     <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
 
     {% block body %}
     <h2>Mis reservas</h2>
 
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
     {% if reservas %}
-    <table>
+    <table class="tabla-reservas">
         <thead>
             <tr>
-            <th>Edificio</th>
-            <th>Sala</th>
-            <th>Fecha</th>
-            <th>Horario</th>
-            <th>Estado</th>
+                <th>Edificio</th>
+                <th>Sala</th>
+                <th>Fecha</th>
+                <th>Horario</th>
+                <th>Participantes</th>
+                <th>Estado</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             {% for r in reservas %}
             <tr>
-            <td>{{ r.edificio }}</td>
-            <td>{{ r.nombre_sala }}</td>
+                <td>{{ r.edificio }}</td>
+                <td>{{ r.nombre_sala }}</td>
 
-            {# --- Formato fecha dd/mm/yyyy --- #}
-            <td>
-                {% if r.fecha %}
-                {{ r.fecha.day }}/{{ "%02d"|format(r.fecha.month) }}/{{ r.fecha.year }}
-                {% endif %}
-            </td>
+                <!-- Fecha -->
+                <td>
+                    {% if r.fecha %}
+                        {{ r.fecha.strftime("%d/%m/%Y") }}
+                    {% endif %}
+                </td>
 
-            {# --- Formato hora_inicio y hora_fin (timedelta -> hh:mm) --- #}
-            <td>
-                {% if r.hora_inicio %}
-                {{ (r.hora_inicio.seconds // 3600) }}:{% if (r.hora_inicio.seconds % 3600) // 60 < 10 %}0{% endif %}{{ (r.hora_inicio.seconds % 3600) // 60 }}
-                {% endif %}
-                -
-                {% if r.hora_fin %}
-                {{ (r.hora_fin.seconds // 3600) }}:{% if (r.hora_fin.seconds % 3600) // 60 < 10 %}0{% endif %}{{ (r.hora_fin.seconds % 3600) // 60 }}
-                {% endif %}
-            </td>
+                <!-- Horario -->
+                <td>
+                    {% if r.hora_inicio %}
+                        {{ "%02d"|format(r.hora_inicio.seconds // 3600) }}:{% if (r.hora_inicio.seconds % 3600) // 60 < 10 %}0{% endif %}{{ (r.hora_inicio.seconds % 3600) // 60 }}
+                    {% endif %}
+                    -
+                    {% if r.hora_fin %}
+                        {{ "%02d"|format(r.hora_fin.seconds // 3600) }}:{% if (r.hora_fin.seconds % 3600) // 60 < 10 %}0{% endif %}{{ (r.hora_fin.seconds % 3600) // 60 }}
+                    {% endif %}
+                </td>
 
-            <td>{{ r.estado }}</td>
+                <!-- Participantes -->
+                <td>
+                    {% if r.participantes and r.participantes|length > 0 %}
+                        {{ r.participantes | join(", ") }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <!-- Estado -->
+                <td>
+                    {% if r.estado.lower() == "activa" %}
+                        <span class="estado-activa">Activa</span>
+                    {% elif r.estado.lower() == "cancelada" %}
+                        <span class="estado-cancelada">Cancelada</span>
+                    {% elif r.estado.lower() == "finalizada" %}
+                        <span class="estado-finalizada">Finalizada</span>
+                    {% else %}
+                        <span>{{ r.estado }}</span>
+                    {% endif %}
+                </td>
+
+                <!-- Acción -->
+                <td>
+                    {% if r.estado.lower() == "activa" %}
+                        {% set mensaje = "¿Deseas cancelar tu participación en la reserva de " ~ r.nombre_sala ~ " el " ~ r.fecha.strftime("%d/%m/%Y") ~ "?" %}
+                        <form method="POST"
+                            action="{{ url_for('cancelar_participacion', id_reserva=r.id_reserva) }}"
+                            onsubmit="return confirm('{{ mensaje }}');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-cancelar" title="Cancelar participación">Cancelar participación</button>
+                        </form>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
     {% else %}
-    <p>No tienes reservas activas.</p>
+        <p>No tienes reservas activas.</p>
     {% endif %}
 
     {% endblock %}
-    
 </body>
 </html>

@@ -8,7 +8,7 @@ class Reserva:
         edificio,
         fecha,
         id_turno,
-        estado="activa",
+        estado="Activa",
         capacidad=None
     ):
         self.id_reserva = id_reserva
@@ -21,9 +21,9 @@ class Reserva:
     
     def cancelar(self):
         # Cambia el estado de la reserva a cancelada solo si está activa
-        if self.estado != "activa":
+        if self.estado != "Activa":
             return flash("Solo se pueden cancelar reservas activas", "warning")
-        self.estado = "cancelada"
+        self.estado = "Cancelada"
 
     def __repr__(self):
         return f"<Reserva {self.id_reserva} - {self.nombre_sala}, {self.edificio} ({self.fecha})>"
