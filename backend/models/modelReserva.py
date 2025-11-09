@@ -6,6 +6,7 @@ from flask_login import current_user
 class modelReserva:
     @classmethod
     def crear_reserva(cls, db, reserva):
+        cursor = None
         try:
             cursor = db.cursor(dictionary=True)
 
@@ -69,17 +70,25 @@ class modelReserva:
             """, (current_user.ci, id_reserva, date.today()))
 
             db.commit()
-            flash("Reserva creada correctamente.", "success")
+            fecha_texto = date.fromisoformat(str(reserva.fecha)).isoformat()
+            flash(
+                f"✅ Reserva creada en Edificio {reserva.edificio}, sala {reserva.nombre_sala} el {fecha_texto}",
+                "success"
+            )
             return True
 
         except Exception as ex:
             db.rollback()
             flash(f"Error al crear reserva: {ex}", "error")
             return False
+        finally:
+            if cursor is not None:
+                cursor.close()
 
 
     @classmethod
     def obtener_reservas_por_usuario(cls, db, ci_participante):
+        cursor = None
         try:
             cursor = db.cursor(dictionary=True)
             query = """
@@ -109,5 +118,9 @@ class modelReserva:
                 )
             return reservas
         except Exception as ex:
-            flash(f"Error al obtener reservas: {f}", "error")
+            flash(f"Error al obtener reservas: {ex}", "error")
             return []
+        finally:
+            if cursor is not None:
+                cursor.close()
+
