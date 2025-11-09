@@ -10,9 +10,10 @@ body.datos {
 
   h2 {
     color: $azul-oscuro;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
     text-align: center;
     font-weight: 700;
+    font-size: 3.5rem;
   }
 
   .formulario {
@@ -74,5 +75,94 @@ body.datos {
   }
 }
 
+.btn-volver-inicio {
+  position: absolute;           /* Lo posiciona arriba a la izquierda */
+  top: 20px;
+  left: 20px;
+  background-color: $azul-oscuro;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-volver-inicio:hover {
+  background-color: rgba($azul-oscuro, 0.8);
+  transform: scale(1.05);
+}
+
 
 // RESERVAS Y SANCIONES!
+
+/* Contenedor */
+table {
+  width: 90%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Encabezados */
+th {
+  background-color: #16386d; /* azul más elegante */
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  text-align: center;
+  font-size: 15px;
+}
+
+/* Celdas */
+td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Edificio alineado a la izquierda */
+td:first-child, th:first-child {
+  text-align: left;
+}
+
+/* Zebra effect */
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover */
+tbody tr:hover {
+  background-color: #e8f0fe;
+  transition: 0.2s ease-in-out;
+}
+
+/* Estado */
+td:last-child {
+  font-weight: 600;
+  color: #198754;
+}
+
+/* Mensaje sin reservas */
+p {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Responsivo */
+@media (max-width: 700px) {
+  table {
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px;
+  }
+}

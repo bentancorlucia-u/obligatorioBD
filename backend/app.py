@@ -90,40 +90,61 @@ def home():
 @app.route("/reservar", methods=["GET", "POST"])
 @login_required
 def reservar():
+    # ============================================
+    # Cargar datos para el formulario
+    # ============================================
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Obtener edificios
     cursor.execute("SELECT nombre_edificio FROM edificio;")
     edificios = cursor.fetchall()
 
-    # Obtener salas agrupadas por edificio
     cursor.execute("SELECT nombre_sala, edificio FROM sala;")
     salas_raw = cursor.fetchall()
     salas_por_edificio = {}
     for s in salas_raw:
         salas_por_edificio.setdefault(s["edificio"], []).append(s["nombre_sala"])
 
-    # Obtener turnos
     cursor.execute("SELECT id_turno, hora_inicio, hora_fin FROM turno;")
     turnos = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    # Si se hace POST (crear reserva)
+    # ============================================
+    # Si se envió el formulario (POST)
+    # ============================================
     if request.method == "POST":
         edificio = request.form["edificio"]
         nombre_sala = request.form["nombre_sala"]
         fecha = request.form["fecha"]
         id_turno = request.form["id_turno"]
 
-        fecha_reserva = date.fromisoformat(fecha)
-        if fecha_reserva < date.today():
-            flash("❌ No se puede reservar una fecha pasada.", "error")
-        else:
-            flash(f"✅ Reserva creada en {edificio}, sala {nombre_sala} el {fecha}", "success")
+        reserva = Reserva(
+            id_reserva=None,
+            nombre_sala=nombre_sala,
+            edificio=edificio,
+            fecha=fecha,
+            id_turno=id_turno,
+            estado="activa"
+        )
 
+        conn = get_connection("administrativo")  # conexión con permisos de escritura
+        if conn:
+            creada = modelReserva.crear_reserva(conn, reserva)
+            conn.close()
+
+            if creada:
+                flash(f"Reserva creada correctamente para {fecha} en {edificio} - {nombre_sala}.", "success")
+                return redirect(url_for("reservar"))  # 🔁 redirige con GET, evita reenvío del POST
+            else:
+                return redirect(url_for("reservar"))
+        else:
+            flash("No se pudo conectar a la base de datos.", "warning")
+
+    # ============================================
+    # Renderizar formulario
+    # ============================================
     return render_template(
         "reservar.html",
         usuario=current_user,
@@ -132,12 +153,38 @@ def reservar():
         salas_por_edificio=salas_por_edificio
     )
 
-@app.route("/misreservas", methods=["GET"])
+@app.route("/misreservas", methods=["GET", "POST"])
 @login_required
 def mis_reservas():
     conn = get_connection("login")
     reservas = modelReserva.obtener_reservas_por_usuario(conn, current_user.ci)
-    return render_template("misreservas.html", usuario=current_user, reservas=reservas)
+    participantes = {}
+
+    # Ver participantes / agregar participante
+    if request.method == "POST":
+        id_reserva = request.form.get("id_reserva")
+        participantes[id_reserva] = modelReserva.obtener_participantes(conn, id_reserva)
+
+    return render_template("misreservas.html", usuario=current_user, reservas=reservas, participantes=participantes)
+
+@app.route("/cancelar_reserva/<int:id_reserva>", methods=["POST"])
+@login_required
+def cancelar_reserva(id_reserva):
+    conn = get_connection("login")
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM reserva WHERE id_reserva = %s;", (id_reserva,))
+    data = cursor.fetchone()
+
+    if not data:
+        flash("Reserva no encontrada.", "error")
+        return redirect(url_for("mis_reservas"))
+
+    reserva = Reserva(**data)
+    exito, msg = reserva.cancelar()
+    if exito:
+        modelReserva.cancelar_reserva(conn, reserva)
+    flash(msg, "success" if exito else "warning")
+    return redirect(url_for("mis_reservas"))
 
 @app.route("/sanciones", methods=["GET"])
 @login_required  # protege la ruta

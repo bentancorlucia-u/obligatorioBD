@@ -8,7 +8,10 @@
 </head>
 <body class="datos">
   {% block body %}
-  <h2>Crear una nueva reserva</h2>
+    <!-- Botón volver al inicio -->
+    <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+  <h2>{{ current_user.nombre }}, crea una nueva reserva</h2>
 
   <form action="{{ url_for('reservar') }}" method="POST" class="formulario">
     <!-- Edificio -->
@@ -33,11 +36,15 @@
     <!-- Turno -->
     <label for="id_turno">Turno:</label>
     <select name="id_turno" required>
-      {% for turno in turnos %}
-        <option value="{{ turno.id_turno }}">
-          {{ turno.hora_inicio }} - {{ turno.hora_fin }}
-        </option>
-      {% endfor %}
+        {% for turno in turnos %}
+            {% set inicio_horas = (turno.hora_inicio.total_seconds() // 3600) | int %}
+            {% set inicio_minutos = ((turno.hora_inicio.total_seconds() % 3600) // 60) | int %}
+            {% set fin_horas = (turno.hora_fin.total_seconds() // 3600) | int %}
+            {% set fin_minutos = ((turno.hora_fin.total_seconds() % 3600) // 60) | int %}
+            <option value="{{ turno.id_turno }}">
+            {{ "%02d:%02d" % (inicio_horas, inicio_minutos) }} - {{ "%02d:%02d" % (fin_horas, fin_minutos) }}
+            </option>
+        {% endfor %}
     </select>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 

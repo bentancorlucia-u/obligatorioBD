@@ -1,5 +1,5 @@
 from models.entities.reserva import Reserva
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, time
 from flask import flash
 from flask_login import current_user
 
@@ -15,6 +15,33 @@ class modelReserva:
                 flash("No se puede crear una reserva con fecha pasada.", "error")
                 return False
 
+           # Validar que el turno no haya pasado si la reserva es para hoy
+            if fecha_reserva == date.today():
+                cursor.execute("""
+                    SELECT hora_inicio FROM turno WHERE id_turno = %s;
+                """, (reserva.id_turno,))
+                result = cursor.fetchone()
+
+                if not result:
+                    flash("⚠ No se encontró el turno seleccionado.", "error")
+                    return False
+
+                hora_actual = datetime.now().time()
+                hora_turno_raw = result["hora_inicio"]
+
+                # Convertir timedelta → time si es necesario
+                if isinstance(hora_turno_raw, timedelta):
+                    total_seconds = int(hora_turno_raw.total_seconds())
+                    horas = total_seconds // 3600
+                    minutos = (total_seconds % 3600) // 60
+                    hora_turno = time(horas, minutos)
+                else:
+                    hora_turno = hora_turno_raw
+
+                # Comparar correctamente
+                if hora_turno < hora_actual:
+                    flash("No se puede reservar un turno que ya comenzó o finalizó.", "error")
+                    return False
             # Validar turno libre
             cursor.execute("""
                 SELECT COUNT(*) AS ocupadas
@@ -69,7 +96,6 @@ class modelReserva:
             """, (current_user.ci, id_reserva, date.today()))
 
             db.commit()
-            flash("Reserva creada correctamente.", "success")
             return True
 
         except Exception as ex:
@@ -79,35 +105,53 @@ class modelReserva:
 
 
     @classmethod
-    def obtener_reservas_por_usuario(cls, db, ci_participante):
+    def obtener_reservas_por_usuario(cls, db, ci):
         try:
             cursor = db.cursor(dictionary=True)
             query = """
-                SELECT r.*, t.hora_inicio, t.hora_fin
+                SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha, 
+                    t.hora_inicio, t.hora_fin, r.estado
                 FROM reserva r
-                JOIN reserva_participante rp ON r.id_reserva = rp.id_reserva
-                JOIN turno t ON r.id_turno = t.id_turno
+                INNER JOIN reserva_participante rp 
+                    ON r.id_reserva = rp.id_reserva
+                INNER JOIN turno t 
+                    ON r.id_turno = t.id_turno
                 WHERE rp.ci_participante = %s
+                AND r.estado = 'Activa'
                 ORDER BY r.fecha DESC;
             """
-            cursor.execute(query, (ci_participante,))
-            rows = cursor.fetchall()
+            cursor.execute(query, (ci,))
+            reservas = cursor.fetchall()
 
-            reservas = []
-            for row in rows:
-                reservas.append(
-                    Reserva(
-                        row["id_reserva"],
-                        row["nombre_sala"],
-                        row["edificio"],
-                        row["fecha"],
-                        row["id_turno"],
-                        row["estado"],
-                        hora_inicio=row["hora_inicio"],
-                        hora_fin=row["hora_fin"]
-                    )
-                )
+            if not reservas:
+                flash("No tenés reservas activas.", "info")
+
             return reservas
-        except Exception as ex:
-            flash(f"Error al obtener reservas: {f}", "error")
+
+        except Exception as e:
+            flash(f"Error al obtener reservas: {e}", "error")
             return []
+    
+    @classmethod
+    def cancelar_reserva(cls, db, reserva: Reserva):
+        """Actualiza el estado en la base de datos."""
+        cursor = db.cursor()
+        cursor.execute("""
+            UPDATE reserva
+            SET estado = %s
+            WHERE id_reserva = %s AND estado = 'activa';
+        """, (reserva.estado, reserva.id_reserva))
+        db.commit()
+        return cursor.rowcount > 0
+    
+    @classmethod
+    def obtener_participantes(cls, db, id_reserva):
+        """Trae los participantes de una reserva."""
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.ci, p.nombre, p.apellido, rp.asistencia
+            FROM reserva_participante rp
+            JOIN participante p ON p.ci = rp.ci_participante
+            WHERE rp.id_reserva = %s;
+        """, (id_reserva,))
+        return cursor.fetchall()

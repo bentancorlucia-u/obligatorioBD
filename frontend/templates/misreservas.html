@@ -9,30 +9,50 @@
 </head>
 <body class="datos">
 
+    <!-- Botón volver al inicio -->
+    <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+
     {% block body %}
     <h2>Mis reservas</h2>
 
     {% if reservas %}
     <table>
         <thead>
-        <tr>
-            <th>Sala</th>
+            <tr>
             <th>Edificio</th>
+            <th>Sala</th>
             <th>Fecha</th>
             <th>Horario</th>
             <th>Estado</th>
-        </tr>
+            </tr>
         </thead>
         <tbody>
-        {% for r in reservas %}
-        <tr>
-            <td>{{ r.nombre_sala }}</td>
+            {% for r in reservas %}
+            <tr>
             <td>{{ r.edificio }}</td>
-            <td>{{ r.fecha }}</td>
-            <td>{{ r.hora_inicio }} - {{ r.hora_fin }}</td>
+            <td>{{ r.nombre_sala }}</td>
+
+            {# --- Formato fecha dd/mm/yyyy --- #}
+            <td>
+                {% if r.fecha %}
+                {{ r.fecha.day }}/{{ "%02d"|format(r.fecha.month) }}/{{ r.fecha.year }}
+                {% endif %}
+            </td>
+
+            {# --- Formato hora_inicio y hora_fin (timedelta -> hh:mm) --- #}
+            <td>
+                {% if r.hora_inicio %}
+                {{ (r.hora_inicio.seconds // 3600) }}:{% if (r.hora_inicio.seconds % 3600) // 60 < 10 %}0{% endif %}{{ (r.hora_inicio.seconds % 3600) // 60 }}
+                {% endif %}
+                -
+                {% if r.hora_fin %}
+                {{ (r.hora_fin.seconds // 3600) }}:{% if (r.hora_fin.seconds % 3600) // 60 < 10 %}0{% endif %}{{ (r.hora_fin.seconds % 3600) // 60 }}
+                {% endif %}
+            </td>
+
             <td>{{ r.estado }}</td>
-        </tr>
-        {% endfor %}
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
     {% else %}
