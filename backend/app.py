@@ -1,10 +1,14 @@
 from flask import Flask, request, render_template, redirect, url_for, flash
 from database import get_connection
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_wtf.csrf import CSRFProtect
 from models.modelUser import modelUser
 from models.entities.user import User
+from models.entities.reserva import Reserva
+from models.modelReserva import modelReserva
 import os
 from dotenv import load_dotenv
+from datetime import date
 
 
 # Cargar las variables del archivo .env
@@ -14,7 +18,8 @@ load_dotenv()
 # ==================================================
 # CONFIGURACIÓN BASE
 # ==================================================
-app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend/css")
+app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend")
+csrf = CSRFProtect(app)  # Protección CSRF para formularios
 app.secret_key = os.getenv("DB_SECRET_KEY")  # Necesario para sesiones y flash()
 
 
@@ -23,6 +28,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"  # Si no hay sesión, redirige acá
 login_manager.login_message = "Por favor inicie sesión para acceder a esta página."
+login_manager.login_message_category = "warning"  # ⚠️ Amarillo
 
 
 
@@ -65,14 +71,14 @@ def login():
           conn2.close()
 
           if existe:
-             flash("Contraseña incorrecta")
+             flash("Contraseña incorrecta", "error")
           else:
-             flash("Usuario no encontrado")
+             flash("Usuario no encontrado", "error")
           return render_template("login.html")
 
       return render_template("login.html")
   else:
-      return render_template("login.html")
+    return render_template("login.html")
 
 
 
@@ -81,18 +87,85 @@ def login():
 def home():
    return render_template("home.html", usuario=current_user)
 
+@app.route("/reservar", methods=["GET", "POST"])
+@login_required
+def reservar():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Obtener edificios
+    cursor.execute("SELECT nombre_edificio FROM edificio;")
+    edificios = cursor.fetchall()
+
+    # Obtener salas agrupadas por edificio
+    cursor.execute("SELECT nombre_sala, edificio FROM sala;")
+    salas_raw = cursor.fetchall()
+    salas_por_edificio = {}
+    for s in salas_raw:
+        salas_por_edificio.setdefault(s["edificio"], []).append(s["nombre_sala"])
+
+    # Obtener turnos
+    cursor.execute("SELECT id_turno, hora_inicio, hora_fin FROM turno;")
+    turnos = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    # Si se hace POST (crear reserva)
+    if request.method == "POST":
+        edificio = request.form["edificio"]
+        nombre_sala = request.form["nombre_sala"]
+        fecha = request.form["fecha"]
+        id_turno = request.form["id_turno"]
+
+        fecha_reserva = date.fromisoformat(fecha)
+        if fecha_reserva < date.today():
+            flash("❌ No se puede reservar una fecha pasada.", "error")
+        else:
+            flash(f"✅ Reserva creada en {edificio}, sala {nombre_sala} el {fecha}", "success")
+
+    return render_template(
+        "reservar.html",
+        usuario=current_user,
+        edificios=edificios,
+        turnos=turnos,
+        salas_por_edificio=salas_por_edificio
+    )
+
+@app.route("/misreservas", methods=["GET"])
+@login_required
+def mis_reservas():
+    conn = get_connection("login")
+    reservas = modelReserva.obtener_reservas_por_usuario(conn, current_user.ci)
+    return render_template("misreservas.html", usuario=current_user, reservas=reservas)
+
+@app.route("/sanciones", methods=["GET"])
+@login_required  # protege la ruta
+def sanciones():
+   return render_template("sanciones.html", usuario=current_user)
+
 
 @app.route("/logout")
 @login_required
 def logout():
    logout_user()
-   flash("Sesión cerrada correctamente.")
+   flash("Sesión cerrada correctamente.", "success")
    return redirect(url_for("login"))
+
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    # permitir JS local y tokens de Flask
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    return response
 
 
 # ==================================================
 # MAIN
 # ==================================================
 if __name__ == "__main__":
-   app.run(debug=True)
+    csrf.init_app(app)
+    app.run(debug=True)
 

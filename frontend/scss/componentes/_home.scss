@@ -1,0 +1,90 @@
+.body-home {
+    font-family: "Rubik", sans-serif;
+    background-color: $gris-claro;
+    color: $azul-oscuro;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: $azul-oscuro;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+// Card estilo
+.card {
+  background-color: $blanco;
+  color: $azul-oscuro;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  text-align: center;
+  min-width: 180px;
+
+  &:hover {
+    background-color: $azul-claro;
+    color: $blanco;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Variación para reservar
+.card.reservar {
+  background-color: lighten($azul-claro, 50%);
+  border: 2px solid $azul-claro;
+  &:hover {
+    background-color: $azul-claro;
+  }
+}
+
+// Botón de cerrar sesión
+.btn-logout {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background-color: $azul-oscuro;
+  color: $blanco;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    background-color: $azul-claro;
+    transform: scale(1.05);
+  }
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    width: 80%;
+  }
+}

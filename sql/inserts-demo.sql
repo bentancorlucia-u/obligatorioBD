@@ -238,26 +238,21 @@ INSERT INTO sala(nombre_sala, edificio, capacidad, tipo_sala) VALUES
 
 -- ---------------- TURNO ----------------
 INSERT INTO turno(hora_inicio, hora_fin) VALUES
-('08:00:00','09:30:00'),
-('09:30:00','11:00:00'),
-('11:00:00','12:30:00'),
-('12:30:00','14:00:00'),
-('14:00:00','15:30:00'),
-('15:30:00','17:00:00'),
-('17:00:00','18:30:00'),
-('18:30:00','20:00:00'),
-('20:00:00','21:30:00'),
-('21:30:00','23:00:00'),
-('08:15:00','09:45:00'),
-('09:45:00','11:15:00'),
-('11:15:00','12:45:00'),
-('12:45:00','14:15:00'),
-('14:15:00','15:45:00'),
-('15:45:00','17:15:00'),
-('17:15:00','18:45:00'),
-('18:45:00','20:15:00'),
-('20:15:00','21:45:00'),
-('21:45:00','23:15:00');
+('08:00:00', '09:00:00'),
+('09:00:00', '10:00:00'),
+('10:00:00', '11:00:00'),
+('11:00:00', '12:00:00'),
+('12:00:00', '13:00:00'),
+('13:00:00', '14:00:00'),
+('14:00:00', '15:00:00'),
+('15:00:00', '16:00:00'),
+('16:00:00', '17:00:00'),
+('17:00:00', '18:00:00'),
+('18:00:00', '19:00:00'),
+('19:00:00', '20:00:00'),
+('20:00:00', '21:00:00'),
+('21:00:00', '22:00:00'),
+('22:00:00', '23:00:00');
 
 -- ---------------- RESERVA ----------------
 INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, ESTADO) VALUES
@@ -275,12 +270,7 @@ INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, ESTADO) VALUES
 ('Sala F2','Edificio Athanasius','2025-11-12',12,'Activa'),
 ('Sala G1','Edificio Madre Marta','2025-11-13',13,'Activa'),
 ('Sala G2','Edificio Madre Marta','2025-11-14',14,'Activa'),
-('Sala H1','Casa Xalambri','2025-11-15',15,'Activa'),
-('Sala H2','Casa Xalambri','2025-11-16',16,'Activa'),
-('Sala I1','Campus Salto','2025-11-17',17,'Activa'),
-('Sala I2','Campus Salto','2025-11-18',18,'Activa'),
-('Sala J1','Edificio Candelaria','2025-11-19',19,'Activa'),
-('Sala J2','Edificio San Fernando','2025-11-20',20,'Activa');
+('Sala H1','Casa Xalambri','2025-11-15',15,'Activa');
 
 -- ---------------- RESERVA_PARTICIPANTE ----------------
 INSERT INTO reserva_participante(ci_participante, id_reserva, fecha_solicitud_reserva, asistencia) VALUES
@@ -298,12 +288,7 @@ INSERT INTO reserva_participante(ci_participante, id_reserva, fecha_solicitud_re
 ('33445566',12,'2025-10-24',TRUE),
 ('44556677',13,'2025-10-24',TRUE),
 ('55667788',14,'2025-10-24',FALSE),
-('66778899',15,'2025-10-24',TRUE),
-('77889900',16,'2025-10-24',TRUE),
-('88990011',17,'2025-10-24',FALSE),
-('99001122',18,'2025-10-24',TRUE),
-('10111213',19,'2025-10-24',TRUE),
-('12131415',20,'2025-10-24',FALSE);
+('66778899',15,'2025-10-24',TRUE);
 
 -- ---------------- SANCION_PARTICIPANTE ----------------
 INSERT INTO sancion_participante(ci_participante, fecha_inicio, fecha_fin) VALUES

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="datos">
+  {% block body %}
+  <h2>Crear una nueva reserva</h2>
+
+  <form action="{{ url_for('reservar') }}" method="POST" class="formulario">
+    <!-- Edificio -->
+    <label for="edificio">Edificio:</label>
+    <select id="edificio" name="edificio" required>
+      <option value="" selected disabled>Seleccioná un edificio</option>
+      {% for e in edificios %}
+        <option value="{{ e.nombre_edificio }}">{{ e.nombre_edificio }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Sala -->
+    <label for="nombre_sala">Sala:</label>
+    <select id="nombre_sala" name="nombre_sala" required disabled>
+      <option value="">Seleccioná un edificio primero</option>
+    </select>
+
+    <!-- Fecha -->
+    <label for="fecha">Fecha:</label>
+    <input type="date" name="fecha" required>
+
+    <!-- Turno -->
+    <label for="id_turno">Turno:</label>
+    <select name="id_turno" required>
+      {% for turno in turnos %}
+        <option value="{{ turno.id_turno }}">
+          {{ turno.hora_inicio }} - {{ turno.hora_fin }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <button type="submit">Reservar</button>
+  </form>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-container">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} margin-top">
+            {{ message }}
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+  <script id="salas-data" type="application/json">
+  {{ salas_por_edificio | tojson | safe }}
+</script>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+  {% endblock %}
+</body>
+
+</html>

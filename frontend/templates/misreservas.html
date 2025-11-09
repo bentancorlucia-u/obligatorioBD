@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Reservas</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="datos">
+
+    {% block body %}
+    <h2>Mis reservas</h2>
+
+    {% if reservas %}
+    <table>
+        <thead>
+        <tr>
+            <th>Sala</th>
+            <th>Edificio</th>
+            <th>Fecha</th>
+            <th>Horario</th>
+            <th>Estado</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in reservas %}
+        <tr>
+            <td>{{ r.nombre_sala }}</td>
+            <td>{{ r.edificio }}</td>
+            <td>{{ r.fecha }}</td>
+            <td>{{ r.hora_inicio }} - {{ r.hora_fin }}</td>
+            <td>{{ r.estado }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No tienes reservas activas.</p>
+    {% endif %}
+
+    {% endblock %}
+    
+</body>
+</html>

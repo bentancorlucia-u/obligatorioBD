@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,13 +19,16 @@
              <form action="/login" method="POST"> <!--/login es la ruta en app.py de @app.route -->
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="password" placeholder="Contraseña" required>
-                {% with message = get_flashed_messages() %} 
-                    {% if message %}  <!--  si es que hay un mensaje -->
-                        <div class="flash-alert" role="alert">{{ message[0] }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
                         </div>
+                        {% endfor %}
                     {% endif %}
-                {% endwith %}
+                    {% endwith %}
 
                 <button type="submit" name="login">Login</button>
             </form>

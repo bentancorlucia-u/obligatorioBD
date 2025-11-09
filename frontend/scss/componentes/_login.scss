@@ -66,9 +66,9 @@ button[name="login"] {
   background-color: $azul-claro; // azul sólido
   color: white;
   border: none; // 👈 sin delineado
-  border-radius: 10px;
-  padding: 0.9rem 2rem;
-  font-size: 1.1rem;
+  border-radius: 40px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -84,24 +84,35 @@ button[name="login"] {
   }
 }
 
-.flash-alert {
-  background-color: rgba(255, 99, 99, 0.15);
-  color: #b22222;
-  border: 1px solid #f08080;
+.alert {
+  padding: 1rem;
   border-radius: 8px;
-  padding: 0.8rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
   width: 100%;
   text-align: center;
-  font-size: 0.95rem;
 }
 
-.btn-close {
-  float: right;
-  background: none;
-  border: none;
-  color: #b22222;
-  font-size: 1.2rem;
-  cursor: pointer;
+.alert-error {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #664d03;
+  border: 1px solid #ffecb5;
+}
+
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+}
+
+.margin-top {
+  margin-top: 2rem;
 }
 
 
