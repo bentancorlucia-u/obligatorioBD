@@ -1,12 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Sanciones</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Sanciones</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    
+
+<body class="datos">
+  <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+  <h2>Mis sanciones</h2>
+
+  {% if sanciones %}
+  <table class="tabla-reservas">
+    <thead>
+      <tr>
+        <th>Estado</th>
+        <th>Fecha de inicio</th>
+        <th>Fecha de fin</th>
+        <th>Días restantes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sanciones %}
+      <tr class="{% if s.estado == 'Activa' %}activa{% else %}expirada{% endif %}">
+        <td>{{ s.estado }}</td>
+        <td>{{ s.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+        <td>{{ s.fecha_fin.strftime('%d/%m/%Y') }}</td>
+        <td>
+          {% if s.estado == 'Activa' %}
+            {{ s.dias_restantes }}
+          {% else %}
+            Expirada
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="mensaje">🎉 No tenés sanciones registradas.</p>
+  {% endif %}
 </body>
 </html>

@@ -302,4 +302,8 @@ INSERT INTO sancion_participante(ci_participante, fecha_inicio, fecha_fin) VALUE
 ('89012345','2025-11-01','2025-11-08');
 
 
+INSERT INTO login(email, password) VALUE
+('administrativo@ucu.edu.uy', 'admin123');
+
+
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio</title>
+    <title>Inicio - Admin</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- fonts -->
@@ -14,13 +14,13 @@
 <body class="body-home">
 
     <h1>Hola, {{ current_user.nombre }} {{ current_user.apellido }}</h1>
-    <p class="tipo-usuario">{{ tipo_persona }}</p>
-
+    <p class="tipo-usuario">Administrador</p>
     <div class="cards">
-        <a href="{{url_for('mis_reservas')}}" class="card">Mis Reservas</a>
-        <a href="{{url_for('reservar')}}" class="card reservar">Reservar Sala de Estudio</a>
-        <a href="{{url_for('unirme')}}" class="card">Unirme a una Sala</a>
-        <a href="{{url_for('sanciones')}}" class="card">Mis Sanciones</a>
+        <a href="{{ url_for('abm_participantes') }}" class="card">Administrar Participantes</a>
+        <a href="{{ url_for('abm_salas') }}" class="card">Administrar Salas</a>
+        <a href="{{ url_for('abm_reservas') }}" class="card">Administrar Reservas</a>
+        <a href="{{ url_for('abm_sanciones') }}" class="card">Administrar Sanciones</a>
+        <a href="{{ url_for('reportes') }}" class="card">Reportes y Métricas</a>
     </div>
     
 

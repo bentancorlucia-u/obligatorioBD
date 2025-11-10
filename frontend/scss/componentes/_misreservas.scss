@@ -1,0 +1,115 @@
+/* Contenedor */
+table {
+  width: 90%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Encabezados */
+th {
+  background-color: #16386d; /* azul más elegante */
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  text-align: center;
+  font-size: 15px;
+}
+
+/* Celdas */
+td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Edificio alineado a la izquierda */
+td:first-child, th:first-child {
+  text-align: left;
+}
+
+/* Zebra effect */
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover */
+tbody tr:hover {
+  background-color: #e8f0fe;
+  transition: 0.2s ease-in-out;
+}
+
+/* Estado */
+.estado-activa {
+  font-weight: 600;
+  color: #198754;
+}
+
+/* Mensaje sin reservas */
+p {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Botón cancelar participación */
+.btn-cancelar {
+  background-color: #c0392b; // rojo elegante
+  color: $blanco;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &:hover {
+    background-color: darken(#c0392b, 8%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  }
+}
+
+/* Responsivo */
+@media (max-width: 700px) {
+  table {
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px;
+  }
+}
+
+.margin-bottom {
+  margin-bottom: 2rem;
+}
+
+// sanciones
+
+.mensaje {
+    color: $azul-oscuro;
+    font-size: 1.2rem;
+    margin-top: 2rem;
+  }
+
+/* Filas según estado de la reserva */
+table.tabla-reservas tr.activa td {
+  background-color: #ffe5e5; /* rojo claro */
+}

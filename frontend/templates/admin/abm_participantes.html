@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABM Participantes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="datos">
+    <!-- Botón volver al inicio -->
+    <a href="{{ url_for('home_admin') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+    {% block body %}
+    <h2>Administración de Participantes</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container margin-bottom">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- ============================= -->
+    <!-- FORMULARIO DE ALTA (HORIZONTAL) -->
+    <!-- ============================= -->
+    <form method="POST" action="{{ url_for('abm_participantes') }}" class="formulario-horizontal">
+        <input type="hidden" name="accion" value="agregar">
+        <div class="form-row">
+            <input type="text" name="ci" placeholder="CI" required class="input-alta">
+            <input type="text" name="nombre" placeholder="Nombre" required class="input-alta">
+            <input type="text" name="apellido" placeholder="Apellido" required class="input-alta">
+            <input type="email" name="email" placeholder="Email" required class="input-alta">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-agregar">Agregar</button>
+        </div>
+    </form>
+
+    <!-- ============================= -->
+    <!-- TABLA DE PARTICIPANTES -->
+    <!-- ============================= -->
+    {% if participantes %}
+    <table class="tabla-participantes">
+        <thead>
+            <tr>
+                <th>CI</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in participantes %}
+            <tr>
+                <form method="POST" action="{{ url_for('abm_participantes') }}">
+                    <td><input type="text" name="ci" value="{{ p.ci }}" readonly class="input-tabla readonly"></td>
+                    <td><input type="text" name="nombre" value="{{ p.nombre }}" class="input-tabla"></td>
+                    <td><input type="text" name="apellido" value="{{ p.apellido }}" class="input-tabla"></td>
+                    <td><input type="email" name="email" value="{{ p.email }}" class="input-tabla"></td>
+                    <td class="acciones">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" name="accion" value="editar" class="btn-editar">Editar</button>
+                        <button type="submit" name="accion" value="eliminar" class="btn-eliminar"
+                                onclick="return confirm('¿Eliminar a {{ p.nombre }} {{ p.apellido }}?');">
+                            Eliminar
+                        </button>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No hay participantes registrados.</p>
+    {% endif %}
+
+    {% endblock %}
+</body>
+</html>
+

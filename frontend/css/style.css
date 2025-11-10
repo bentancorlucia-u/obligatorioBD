@@ -126,6 +126,15 @@ button[name=login]:hover {
   text-align: center;
 }
 
+.tipo-usuario {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #173363;
+  margin-top: -1.2rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
 .cards {
   display: flex;
   flex-wrap: wrap;
@@ -372,6 +381,324 @@ p {
     padding: 10px;
   }
 }
+body.datos {
+  font-family: "Rubik", sans-serif;
+  background-color: #f3f6fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3rem 1rem;
+}
+body.datos h2 {
+  color: #173363;
+  margin-bottom: 3rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 3.5rem;
+}
+body.datos .formulario {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+body.datos .formulario label {
+  font-weight: 600;
+  color: #173363;
+  font-size: 0.95rem;
+}
+body.datos .formulario input,
+body.datos .formulario select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-size: 1rem;
+  background-color: #f3f6fa;
+  transition: all 0.3s ease;
+}
+body.datos .formulario input:focus,
+body.datos .formulario select:focus {
+  outline: none;
+  border-color: #00ABE8;
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 171, 232, 0.3);
+}
+body.datos .formulario button {
+  margin-top: 1rem;
+  background-color: #00ABE8;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+body.datos .formulario button:hover {
+  background-color: rgb(0, 133.4094827586, 181);
+  transform: translateY(-2px);
+}
+body.datos .formulario button:active {
+  transform: translateY(0);
+}
+
+.btn-volver-inicio {
+  position: absolute; /* Lo posiciona arriba a la izquierda */
+  top: 20px;
+  left: 20px;
+  background-color: #173363;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-volver-inicio:hover {
+  background-color: rgba(23, 51, 99, 0.8);
+  transform: scale(1.05);
+}
+
+/* Contenedor */
+table {
+  width: 90%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Encabezados */
+th {
+  background-color: #16386d; /* azul más elegante */
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  text-align: center;
+  font-size: 15px;
+}
+
+/* Celdas */
+td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Edificio alineado a la izquierda */
+td:first-child, th:first-child {
+  text-align: left;
+}
+
+/* Zebra effect */
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover */
+tbody tr:hover {
+  background-color: #e8f0fe;
+  transition: 0.2s ease-in-out;
+}
+
+/* Estado */
+.estado-activa {
+  font-weight: 600;
+  color: #198754;
+}
+
+/* Mensaje sin reservas */
+p {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Botón cancelar participación */
+.btn-cancelar {
+  background-color: #c0392b;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-cancelar:hover {
+  background-color: rgb(158.6655319149, 47.1038297872, 35.5344680851);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+.btn-cancelar:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsivo */
+@media (max-width: 700px) {
+  table {
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px;
+  }
+}
+.margin-bottom {
+  margin-bottom: 2rem;
+}
+
+.mensaje {
+  color: #173363;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+}
+
+/* Filas según estado de la reserva */
+table.tabla-reservas tr.activa td {
+  background-color: #ffe5e5; /* rojo claro */
+}
+
+body.unirme {
+  font-family: "Rubik", sans-serif;
+  background-color: #f3f6fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3rem 1rem;
+  position: relative;
+}
+body.unirme h2 {
+  color: #173363;
+  margin-bottom: 3rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 3.5rem;
+}
+body.unirme .flash-container {
+  width: 100%;
+  max-width: 450px;
+  margin-bottom: 1.5rem;
+}
+body.unirme .flash-container .alert {
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.8rem;
+}
+body.unirme .flash-container .alert.alert-success {
+  background-color: rgb(181, 235.5431034483, 255);
+  color: rgb(0, 77.0237068966, 104.5);
+  border: 1px solid rgb(104.5, 215.4288793103, 255);
+}
+body.unirme .flash-container .alert.alert-error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+body.unirme .form-unirme {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+body.unirme .form-unirme label {
+  font-weight: 600;
+  color: #173363;
+  font-size: 0.95rem;
+}
+body.unirme .form-unirme input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-size: 1rem;
+  background-color: #f3f6fa;
+  transition: all 0.3s ease;
+}
+body.unirme .form-unirme input:focus {
+  outline: none;
+  border-color: #00ABE8;
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 171, 232, 0.3);
+}
+body.unirme .form-unirme .btn-confirmar {
+  margin-top: 1rem;
+  background-color: #00ABE8;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+body.unirme .form-unirme .btn-confirmar:hover {
+  background-color: rgb(0, 133.4094827586, 181);
+  transform: translateY(-2px);
+}
+body.unirme .form-unirme .btn-confirmar:active {
+  transform: translateY(0);
+}
+body.unirme .btn-volver-inicio {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: #173363;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s, transform 0.1s;
+}
+body.unirme .btn-volver-inicio:hover {
+  background-color: rgba(23, 51, 99, 0.8);
+  transform: scale(1.05);
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 * {
   margin: 0;
   padding: 0;

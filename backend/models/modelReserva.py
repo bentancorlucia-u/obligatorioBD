@@ -74,7 +74,7 @@ class modelReserva:
                         WHEN ppa.rol = 'Docente' THEN 'Docente'
                         WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'grado' THEN 'Estudiante de grado'
                         WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'posgrado' THEN 'Estudiante de posgrado'
-                        ELSE 'Desconocido'
+                        ELSE 'Administrativo'
                     END AS tipo_persona
                 FROM participantes_programa_academico ppa
                 JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa

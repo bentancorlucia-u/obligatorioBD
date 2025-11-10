@@ -1,0 +1,175 @@
+/* === FORMULARIO DE ALTA HORIZONTAL === */
+.formulario-horizontal {
+  background-color: $blanco;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  width: 95%;
+  max-width: 1400px;
+  margin: 0 auto 2.5rem auto;
+  display: flex;
+  justify-content: center;
+
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .input-alta {
+    flex: 1 1 180px;
+    padding: 0.6rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $azul-claro;
+      box-shadow: 0 0 6px rgba(0, 171, 232, 0.3);
+    }
+  }
+
+  .btn-agregar {
+    background-color: $azul-claro;
+    color: $blanco;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: darken($azul-claro, 8%);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+/* === INPUTS DENTRO DE TABLA === */
+.tabla-participantes {
+  width: 95%;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-collapse: collapse;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: $blanco;
+
+  th {
+    background-color: #16386d;
+    color: $blanco;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+
+  .input-tabla {
+    width: 90%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #dcdcdc;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background-color: #fafafa;
+    transition: all 0.3s ease;
+
+    &:focus {
+      background-color: #fff;
+      border-color: $azul-claro;
+      box-shadow: 0 0 5px rgba(0, 171, 232, 0.25);
+      outline: none;
+    }
+
+    &.readonly {
+      background-color: #f1f1f1;
+      color: #555;
+    }
+  }
+
+  .acciones {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  tbody tr:hover {
+    background-color: #f4f8ff;
+    transition: 0.2s ease-in-out;
+  }
+
+  .btn-editar {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background-color: darken(#28a745, 8%);
+    }
+  }
+
+  .btn-eliminar {
+    background-color: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background-color: darken(#c0392b, 8%);
+    }
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .formulario-horizontal {
+    flex-direction: column;
+
+    .form-row {
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .btn-agregar {
+      width: 100%;
+    }
+  }
+
+  .tabla-participantes {
+    font-size: 12px;
+
+    .input-tabla {
+      font-size: 0.8rem;
+    }
+
+    .btn-editar,
+    .btn-eliminar {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+    }
+  }
+}
+
+

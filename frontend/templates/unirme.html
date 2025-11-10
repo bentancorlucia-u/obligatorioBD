@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Unirme a una Sala</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="unirme">
+    <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+    <h2>Unirme a una Sala</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="form-unirme">
+        <label for="id_reserva">ID de reserva:</label>
+        <input type="number" name="id_reserva" placeholder="ej: 1234" id="id_reserva" required>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-confirmar">Unirme</button>
+    </form>
+</body>
+</html>

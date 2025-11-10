@@ -19,6 +19,15 @@
 
 }
 
+.tipo-usuario {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: $azul-oscuro;
+  margin-top: -1.2rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
 .cards {
   display: flex;
   flex-wrap: wrap;
