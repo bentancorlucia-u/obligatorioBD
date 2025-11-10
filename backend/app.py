@@ -53,31 +53,37 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-  if request.method == "POST":
-      user = User(0, request.form["email"], request.form["password"], "", "", "")
-      conn = get_connection("login")  # crear conexión por request
-      logged_user = modelUser.login(conn, user)
+    if request.method == "POST":
+        user = User(0, request.form["email"], request.form["password"], "", "", "")
+        conn = get_connection("login")
+        logged_user = modelUser.login(conn, user)
 
-      if logged_user is not None:
-          if logged_user.password:  # contraseña y usuario correcta
-              login_user(logged_user)
-              return redirect(url_for("home"))
-      else:
-          conn2 = get_connection("reportes")
-          cursor = conn2.cursor(dictionary=True)
-          cursor.execute("SELECT email FROM login WHERE email= %s LIMIT 1", (request.form["email"],)) #busca si existe el usuario
-          existe = cursor.fetchone()
-          cursor.close()
-          conn2.close()
+        if logged_user is not None:
+            if logged_user.password:  # contraseña correcta
+                login_user(logged_user)
 
-          if existe:
-             flash("Contraseña incorrecta", "error")
-          else:
-             flash("Usuario no encontrado", "error")
-          return render_template("login.html")
+                # Verificar si es el administrador
+                if logged_user.email == "administrativo@ucu.edu.uy":
+                    return redirect(url_for("home_admin"))
+                else:
+                    return redirect(url_for("home"))
 
-      return render_template("login.html")
-  else:
+        # Si no se pudo loguear correctamente
+        conn2 = get_connection("reportes")
+        cursor = conn2.cursor(dictionary=True)
+        cursor.execute("SELECT email FROM login WHERE email = %s LIMIT 1", (request.form["email"],))
+        existe = cursor.fetchone()
+        cursor.close()
+        conn2.close()
+
+        if existe:
+            flash("Contraseña incorrecta", "error")
+        else:
+            flash("Usuario no encontrado", "error")
+
+        return render_template("login.html")
+
+    # Si entra por GET
     return render_template("login.html")
 
 
@@ -381,6 +387,66 @@ def unirme():
     cursor.close()
     conn.close()
     return render_template("unirme.html", usuario=current_user)
+
+
+# ==================================================
+# RUTAS PANEL ADMINISTRADOR
+# ==================================================
+
+@app.route("/home-admin")
+@login_required
+def home_admin():
+    # Solo el admin puede acceder
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("home-admin.html", usuario=current_user)
+
+
+@app.route("/admin/participantes")
+@login_required
+def abm_participantes():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("admin/abm_participantes.html", usuario=current_user)
+
+
+@app.route("/admin/salas")
+@login_required
+def abm_salas():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("admin/abm_salas.html", usuario=current_user)
+
+
+@app.route("/admin/reservas")
+@login_required
+def abm_reservas():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("admin/abm_reservas.html", usuario=current_user)
+
+
+@app.route("/admin/sanciones")
+@login_required
+def abm_sanciones():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("admin/abm_sanciones.html", usuario=current_user)
+
+
+@app.route("/admin/reportes")
+@login_required
+def reportes():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("admin/reportes.html", usuario=current_user)
+
 
 
 
