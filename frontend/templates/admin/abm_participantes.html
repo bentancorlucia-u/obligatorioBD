@@ -29,15 +29,35 @@
     <!-- FORMULARIO DE ALTA (HORIZONTAL) -->
     <!-- ============================= -->
     <form method="POST" action="{{ url_for('abm_participantes') }}" class="formulario-horizontal">
-        <input type="hidden" name="accion" value="agregar">
-        <div class="form-row">
-            <input type="text" name="ci" placeholder="CI" required class="input-alta">
-            <input type="text" name="nombre" placeholder="Nombre" required class="input-alta">
-            <input type="text" name="apellido" placeholder="Apellido" required class="input-alta">
-            <input type="email" name="email" placeholder="Email" required class="input-alta">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn-agregar">Agregar</button>
-        </div>
+    <input type="hidden" name="accion" value="agregar">
+    <div class="form-row">
+        <input type="text" name="ci" placeholder="CI" required class="input-alta">
+        <input type="text" name="nombre" placeholder="Nombre" required class="input-alta">
+        <input type="text" name="apellido" placeholder="Apellido" required class="input-alta">
+        <input type="email" name="email" placeholder="Email" required class="input-alta">
+
+        <!-- Facultad -->
+        <select id="facultad" name="facultad" required class="input-alta">
+            <option value="">Seleccionar facultad</option>
+            {% for f in facultades %}
+                <option value="{{ f.nombre }}">{{ f.nombre }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Programas -->
+        <select id="programa" name="programa" required class="input-alta" disabled>
+            <option value="">Seleccionar programa</option>
+        </select>
+
+        <!-- Rol -->
+        <select name="rol" required class="input-alta">
+            <option value="Estudiante">Estudiante</option>
+            <option value="Docente">Docente</option>
+        </select>
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-agregar">Agregar</button>
+    </div>
     </form>
 
     <!-- ============================= -->
@@ -79,7 +99,16 @@
         <p>No hay participantes registrados.</p>
     {% endif %}
 
+    <!-- Pasar los datos de Flask a JS -->
+    <script id="programas-data" type="application/json">
+    {{ programas_por_facultad | tojson | safe }}
+    </script>
+
+    <script src="{{ url_for('static', filename='js/script-participantes.js') }}"></script>
+
     {% endblock %}
+
+
 </body>
 </html>
 

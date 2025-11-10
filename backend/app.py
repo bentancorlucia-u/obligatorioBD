@@ -9,7 +9,12 @@ from models.modelReserva import modelReserva
 import os
 from dotenv import load_dotenv
 from datetime import date
-
+from werkzeug.security import generate_password_hash
+from utilidades import (
+    generar_contrasena,
+    validar_cedula_uruguaya,
+    validar_email_institucional
+)
 
 # Cargar las variables del archivo .env
 load_dotenv()
@@ -403,22 +408,278 @@ def home_admin():
     return render_template("home-admin.html", usuario=current_user)
 
 
-@app.route("/admin/participantes")
+@app.route("/admin/participantes", methods=["GET", "POST"])
 @login_required
 def abm_participantes():
+    # 🔒 Solo el admin puede acceder
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
 
-    return render_template("admin/abm_participantes.html", usuario=current_user)
+    conn = get_connection("administrativo")
+    cursor = conn.cursor(dictionary=True)
+
+    # ============================================
+    # Obtener facultades y programas
+    # ============================================
+    cursor.execute("SELECT id_facultad, nombre FROM facultad ORDER BY nombre;")
+    facultades = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT pa.nombre_programa, f.nombre AS facultad
+        FROM programas_academicos pa
+        JOIN facultad f ON pa.id_facultad = f.id_facultad
+        ORDER BY f.nombre, pa.nombre_programa;
+    """)
+    rows = cursor.fetchall()
+
+    programas_por_facultad = {}
+    for row in rows:
+        fac = row["facultad"]
+        programas_por_facultad.setdefault(fac, []).append(row["nombre_programa"])
+
+    # ============================================
+    # Manejo de formulario (alta / baja / edición)
+    # ============================================
+    if request.method == "POST":
+        accion = request.form.get("accion")
+
+        # ============================================
+        # AGREGAR PARTICIPANTE
+        # ============================================
+        if accion == "agregar":
+            ci = request.form.get("ci")
+            nombre = request.form.get("nombre")
+            apellido = request.form.get("apellido")
+            email = request.form.get("email")
+            facultad = request.form.get("facultad")
+            programa = request.form.get("programa")
+            rol = request.form.get("rol")
+
+            # Validaciones
+            if not validar_cedula_uruguaya(ci):
+                flash("Cédula inválida. Debe ser una cédula uruguaya válida.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            if not validar_email_institucional(email, rol):
+                dominio = "@correo.ucu.edu.uy" if rol.lower() == "estudiante" else "@ucu.edu.uy"
+                flash(f"Email institucional inválido. Debe terminar en {dominio}", "error")
+                return redirect(url_for("abm_participantes"))
+
+            try:
+                cursor.execute("SELECT 1 FROM participantes WHERE ci = %s OR email = %s", (ci, email))
+                if cursor.fetchone():
+                    flash("Ya existe un participante con ese CI o email.", "error")
+                else:
+                    # Insertar participante
+                    cursor.execute("""
+                        INSERT INTO participantes (ci, nombre, apellido, email)
+                        VALUES (%s, %s, %s, %s)
+                    """, (ci, nombre, apellido, email))
+
+                    # Generar y guardar contraseña
+                    contrasena_generada = generar_contrasena(10)
+                    contrasena_hash = generate_password_hash(contrasena_generada)
+
+                    cursor.execute("""
+                        INSERT INTO login (email, password)
+                        VALUES (%s, %s)
+                    """, (email, contrasena_hash))
+
+                    # Asociar a programa
+                    cursor.execute("""
+                        INSERT INTO participantes_programa_academico (ci_participante, nombre_programa, rol)
+                        VALUES (%s, %s, %s)
+                    """, (ci, programa, rol))
+
+                    conn.commit()
+
+                    flash(
+                        f"{nombre} {apellido} fue agregado correctamente a {programa} ({rol}). "
+                        f"Contraseña generada: {contrasena_generada}",
+                        "success"
+                    )
+
+            except Exception as e:
+                conn.rollback()
+                flash(f"Error al agregar participante: {e}", "error")
+
+            return redirect(url_for("abm_participantes"))
+
+        # ============================================
+        # EDITAR PARTICIPANTE
+        # ============================================
+        elif accion == "editar":
+            ci = request.form.get("ci")
+            nombre = request.form.get("nombre")
+            apellido = request.form.get("apellido")
+            email = request.form.get("email")
+
+            # Evitar modificar al admin
+            if email == "administrativo@ucu.edu.uy":
+                flash("No se puede modificar al usuario administrativo.", "warning")
+                return redirect(url_for("abm_participantes"))
+
+            try:
+                cursor.execute("""
+                    UPDATE participantes
+                    SET nombre = %s, apellido = %s, email = %s
+                    WHERE ci = %s
+                """, (nombre, apellido, email, ci))
+                conn.commit()
+                flash(f"{nombre} {apellido} actualizado correctamente.", "success")
+            except Exception as e:
+                conn.rollback()
+                flash(f"Error al editar participante: {e}", "error")
+
+            return redirect(url_for("abm_participantes"))
+
+        # ============================================
+        # ELIMINAR PARTICIPANTE
+        # ============================================
+        elif accion == "eliminar":
+            ci = request.form.get("ci")
+            cursor.execute("SELECT email FROM participantes WHERE ci = %s", (ci,))
+            participante = cursor.fetchone()
+
+            if not participante:
+                flash("Participante no encontrado.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            email = participante["email"]
+
+            # Evitar eliminar al admin
+            if email == "administrativo@ucu.edu.uy":
+                flash("No se puede eliminar al usuario administrativo.", "warning")
+                return redirect(url_for("abm_participantes"))
+
+            try:
+                cursor.execute("DELETE FROM participantes WHERE ci = %s", (ci,))
+                conn.commit()
+                flash("Participante eliminado correctamente.", "success")
+            except Exception as e:
+                conn.rollback()
+                flash(f"Error al eliminar participante: {e}", "error")
+
+            return redirect(url_for("abm_participantes"))
+
+    # ============================================
+    # Mostrar participantes actuales
+    # ============================================
+    cursor.execute("""
+        SELECT ci, nombre, apellido, email
+        FROM participantes
+        ORDER BY 
+            CASE WHEN email = 'administrativo@ucu.edu.uy' THEN 0 ELSE 1 END,
+            apellido, nombre;
+    """)
+    participantes = cursor.fetchall()
+
+    return render_template(
+        "admin/abm_participantes.html",
+        usuario=current_user,
+        participantes=participantes,
+        facultades=facultades,
+        programas_por_facultad=programas_por_facultad
+    )
 
 
-@app.route("/admin/salas")
+
+@app.route("/admin/salas", methods=["GET", "POST"])
 @login_required
 def abm_salas():
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
 
-    return render_template("admin/abm_salas.html", usuario=current_user)
+    conn = get_connection("administrativo")
+    cursor = conn.cursor(dictionary=True)
+
+    # 🔹 Edificios para el select
+    cursor.execute("SELECT nombre_edificio FROM edificio ORDER BY nombre_edificio;")
+    edificios = [e["nombre_edificio"] for e in cursor.fetchall()]
+
+    # =========================================
+    # ALTA
+    # =========================================
+    if request.method == "POST" and request.form.get("accion") == "agregar":
+        nombre_sala = request.form["nombre_sala"]
+        edificio = request.form["edificio"]
+        tipo_sala = request.form["tipo_sala"]
+
+        # Validar capacidad
+        try:
+            capacidad = int(request.form["capacidad"])
+            if capacidad <= 0:
+                raise ValueError("Capacidad debe ser un número entero positivo.")
+        except ValueError:
+            flash("La capacidad debe ser un número entero positivo.", "error")
+            return redirect(url_for("abm_salas"))
+
+        try:
+            cursor.execute("""
+                INSERT INTO sala (nombre_sala, edificio, capacidad, tipo_sala)
+                VALUES (%s, %s, %s, %s);
+            """, (nombre_sala, edificio, capacidad, tipo_sala))
+            conn.commit()
+            flash("Sala agregada correctamente.", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al agregar sala: {e}", "error")
+
+    # =========================================
+    # ELIMINAR
+    # =========================================
+    elif request.method == "POST" and request.form.get("accion") == "eliminar":
+        nombre_sala = request.form["nombre_sala"]
+        edificio = request.form["edificio"]
+
+        cursor.execute("""
+            DELETE FROM sala
+            WHERE nombre_sala = %s AND edificio = %s;
+        """, (nombre_sala, edificio))
+        conn.commit()
+        flash("Sala eliminada correctamente.", "info")
+
+    # =========================================
+    # EDITAR
+    # =========================================
+    elif request.method == "POST" and request.form.get("accion") == "editar":
+        nombre_sala = request.form["nombre_sala"]
+        edificio = request.form["edificio"]
+        nuevo_tipo = request.form["tipo_sala"]
+
+        # Validar capacidad
+        try:
+            nueva_capacidad = int(request.form["capacidad"])
+            if nueva_capacidad <= 0:
+                raise ValueError("Capacidad debe ser un número entero positivo.")
+        except ValueError:
+            flash("La capacidad debe ser un número entero positivo.", "error")
+            return redirect(url_for("abm_salas"))
+
+        try:
+            cursor.execute("""
+                UPDATE sala
+                SET capacidad = %s, tipo_sala = %s
+                WHERE nombre_sala = %s AND edificio = %s;
+            """, (nueva_capacidad, nuevo_tipo, nombre_sala, edificio))
+            conn.commit()
+            flash("Sala modificada correctamente.", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al modificar sala: {e}", "error")
+
+
+    # =========================================
+    # CONSULTA
+    # =========================================
+    cursor.execute("""
+        SELECT nombre_sala, edificio, capacidad, tipo_sala
+        FROM sala
+        ORDER BY edificio, nombre_sala;
+    """)
+    salas = cursor.fetchall()
+
+    return render_template("admin/abm_salas.html", salas=salas, edificios=edificios)
 
 
 @app.route("/admin/reservas")

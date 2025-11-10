@@ -1,0 +1,146 @@
+.tabla-abm {
+  width: 90%;
+  margin-top: 2rem;
+
+  th, td {
+    text-align: center;
+    padding: 1rem;
+  }
+
+  th {
+    background-color: $azul-oscuro;
+    color: $blanco;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f8f8f8;
+  }
+
+  tr:hover {
+    background-color: #eef5ff;
+  }
+}
+
+.form-horizontal {
+  width: 90%;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  input, select {
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+
+  .btn-agregar {
+    background-color: $azul-oscuro;
+    color: $blanco;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.5rem;
+    margin-left: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+
+    &:hover {
+      background-color: darken($azul-oscuro, 10%);
+    }
+  }
+}
+
+/* ==== TABLA DE ADMINISTRACIÓN ==== */
+.tabla-abm {
+  width: 95%;
+  margin: 2rem auto;
+  border-collapse: collapse;
+  background-color: $blanco;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid #e6e6e6;
+  }
+
+  th {
+    background-color: $azul-oscuro;
+    color: $blanco;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  tr:hover {
+    background-color: #f3f7ff;
+  }
+
+  /* ==== Inputs y selects dentro de la tabla ==== */
+  input[type="number"],
+  select {
+    width: 100px;
+    padding: 0.4rem 0.5rem;
+    font-family: "Rubik", sans-serif;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="number"]:focus,
+  select:focus {
+    outline: none;
+    border-color: $azul-oscuro;
+    box-shadow: 0 0 5px rgba(0, 84, 170, 0.3);
+  }
+
+  /* Mostrar flechitas */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button;
+    opacity: 1;
+  }
+
+  /* ==== Botones ==== */
+  .btn-editar,
+  .btn-eliminar {
+    font-family: "Rubik", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-editar {
+    background-color: #2196f3;
+    color: #fff;
+
+    &:hover {
+      background-color: #1976d2;
+    }
+  }
+
+  .btn-eliminar {
+    background-color: #e53935;
+    color: #fff;
+
+    &:hover {
+      background-color: #b71c1c;
+    }
+  }
+}
+

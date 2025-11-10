@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administrar Salas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="datos">
+  <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+  <h2>Administración de Salas</h2>
+
+  <!-- Formulario de alta -->
+  <form method="POST" class="form-horizontal">
+    <input type="hidden" name="accion" value="agregar">
+    <div class="form-group">
+      <input type="text" name="nombre_sala" placeholder="Nombre de sala" required>
+
+      <select name="edificio" required>
+        <option value="">Seleccione edificio</option>
+        {% for e in edificios %}
+          <option value="{{ e }}">{{ e }}</option>
+        {% endfor %}
+      </select>
+
+      <input type="number" name="capacidad" placeholder="Capacidad" min="1" step="1" required>
+
+      <select name="tipo_sala" required>
+        <option value="Libre">Libre</option>
+        <option value="Posgrado">Posgrado</option>
+        <option value="Docente">Docente</option>
+      </select>
+
+      <button type="submit" class="btn-agregar">Agregar</button>
+    </div>
+  </form>
+
+  <!-- Tabla -->
+  <table class="tabla-abm">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Edificio</th>
+        <th>Capacidad</th>
+        <th>Tipo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in salas %}
+      <tr>
+        <form method="POST">
+          <td>{{ s.nombre_sala }}</td>
+          <td>{{ s.edificio }}</td>
+          <td>
+            <input type="number" name="capacidad" value="{{ s.capacidad }}" min="1" step="1" required>
+          </td>
+          <td>
+            <select name="tipo_sala" required>
+              <option value="Libre" {% if s.tipo_sala == 'Libre' %}selected{% endif %}>Libre</option>
+              <option value="Posgrado" {% if s.tipo_sala == 'Posgrado' %}selected{% endif %}>Posgrado</option>
+              <option value="Docente" {% if s.tipo_sala == 'Docente' %}selected{% endif %}>Docente</option>
+            </select>
+          </td>
+          <td>
+            <input type="hidden" name="nombre_sala" value="{{ s.nombre_sala }}">
+            <input type="hidden" name="edificio" value="{{ s.edificio }}">
+
+            <button type="submit" name="accion" value="editar" class="btn-editar">Editar</button>
+            <button type="submit" name="accion" value="eliminar" class="btn-eliminar">Eliminar</button>
+          </td>
+        </form>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

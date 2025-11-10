@@ -114,5 +114,30 @@ CREATE TABLE sancion_participante (
 ALTER TABLE reserva ADD INDEX idx_fecha_turno (fecha, id_turno);
 ALTER TABLE sala ADD INDEX idx_tipo_sala (tipo_sala);
 
+ALTER TABLE login DROP FOREIGN KEY login_ibfk_1;
+ALTER TABLE login
+ADD CONSTRAINT fk_login_participantes_email
+FOREIGN KEY (email)
+REFERENCES participantes(email)
+ON UPDATE CASCADE
+ON DELETE CASCADE;
+
+
+ALTER TABLE participantes_programa_academico
+MODIFY COLUMN id_alumno_programa INT NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE participantes_programa_academico
+DROP FOREIGN KEY participantes_programa_academico_ibfk_1;
+
+ALTER TABLE participantes_programa_academico
+ADD CONSTRAINT fk_ppa_participantes_ci
+FOREIGN KEY (ci_participante)
+REFERENCES participantes(ci)
+ON UPDATE CASCADE
+ON DELETE CASCADE;
+
+ALTER TABLE sala
+ADD CONSTRAINT chk_capacidad_positiva
+CHECK (capacidad > 0);
 
 
