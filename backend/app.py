@@ -83,9 +83,34 @@ def login():
 
 
 @app.route("/home")
-@login_required  # protege la ruta
+@login_required
 def home():
-   return render_template("home.html", usuario=current_user)
+    conn = get_connection("login")
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            CASE 
+                WHEN ppa.rol = 'Docente' THEN 'Docente'
+                WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'grado' THEN 'Estudiante de grado'
+                WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'posgrado' THEN 'Estudiante de posgrado'
+                ELSE 'Desconocido'
+            END AS tipo_persona
+        FROM participantes_programa_academico ppa
+        JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa
+        WHERE ppa.ci_participante = %s
+        LIMIT 1;
+    """, (current_user.ci,))
+
+    tipo = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "home.html",
+        usuario=current_user,
+        tipo_persona=tipo["tipo_persona"] if tipo else "Desconocido"
+    )
 
 @app.route("/reservar", methods=["GET", "POST"])
 @login_required
@@ -218,9 +243,145 @@ def cancelar_participacion(id_reserva):
     return redirect(url_for("mis_reservas"))
 
 @app.route("/sanciones", methods=["GET"])
-@login_required  # protege la ruta
+@login_required
 def sanciones():
-   return render_template("sanciones.html", usuario=current_user)
+    conn = get_connection("login")
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT fecha_inicio, fecha_fin
+        FROM sancion_participante
+        WHERE ci_participante = %s
+        ORDER BY fecha_inicio DESC;
+    """, (current_user.ci,))
+    sanciones = cursor.fetchall()
+
+    hoy = date.today()
+    sanciones_ordenadas = []
+
+    for s in sanciones:
+        dias_restantes = (s["fecha_fin"] - hoy).days
+        s["dias_restantes"] = max(dias_restantes, 0)
+        s["estado"] = "Activa" if dias_restantes >= 0 else "Expirada"
+        sanciones_ordenadas.append(s)
+
+    # Orden: primero activas, luego expiradas
+    sanciones_ordenadas.sort(key=lambda x: x["estado"] != "Activa")
+
+    return render_template(
+        "sanciones.html",
+        usuario=current_user,
+        sanciones=sanciones_ordenadas
+    )
+
+@app.route("/unirme", methods=["GET", "POST"])
+@login_required
+def unirme():
+    conn = get_connection("login")
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == "POST":
+        id_reserva = request.form.get("id_reserva")
+
+        # Verificar que la reserva exista y esté activa
+        cursor.execute("""
+            SELECT r.id_reserva, r.fecha, r.id_turno, s.capacidad, s.tipo_sala,
+                   (SELECT COUNT(*) FROM reserva_participante rp WHERE rp.id_reserva = r.id_reserva) AS ocupados
+            FROM reserva r
+            JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
+            WHERE r.id_reserva = %s AND r.estado = 'Activa';
+        """, (id_reserva,))
+        reserva = cursor.fetchone()
+
+        if not reserva:
+            flash("La reserva no existe o ya no está activa.", "error")
+
+        else:
+            # Verificar sanciones activas
+            cursor.execute("""
+                SELECT DATE_FORMAT(fecha_fin, '%d/%m/%Y') AS fin
+                FROM sancion_participante
+                WHERE ci_participante = %s
+                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
+            """, (current_user.ci,))
+            sancion = cursor.fetchone()
+
+            if sancion:
+                flash(f"No puedes unirte a la sala: estás sancionado hasta el {sancion['fin']}.", "error")
+                cursor.close(); conn.close()
+                return render_template("unirme.html", usuario=current_user)
+
+            # Verificar tipo de sala vs tipo de usuario
+            tipo_sala = reserva["tipo_sala"].lower()
+            tipo_usuario = current_user.tipo.lower()
+
+            if tipo_sala == "posgrado" and "grado" in tipo_usuario:
+                flash("Solo posgrado o docentes pueden unirse a esta sala.", "error")
+                cursor.close(); conn.close()
+                return render_template("unirme.html", usuario=current_user)
+
+            if tipo_sala == "docente" and "docente" not in tipo_usuario:
+                flash("Solo docentes pueden unirse a esta sala.", "error")
+                cursor.close(); conn.close()
+                return render_template("unirme.html", usuario=current_user)
+
+            # Verificar si ya está en la reserva
+            cursor.execute("""
+                SELECT 1 FROM reserva_participante
+                WHERE ci_participante = %s AND id_reserva = %s;
+            """, (current_user.ci, id_reserva))
+            if cursor.fetchone():
+                flash("Ya sos participante de esta reserva.", "warning")
+
+            # Verificar capacidad
+            elif reserva["ocupados"] >= reserva["capacidad"]:
+                flash("La sala ya alcanzó su capacidad máxima.", "error")
+
+            else:
+                # Restricciones de grado: límite diario y semanal
+                if "grado" in tipo_usuario:
+                    # Límite diario: 2 horas por día
+                    cursor.execute("""
+                        SELECT COUNT(*) AS bloques
+                        FROM reserva_participante rp
+                        JOIN reserva r ON rp.id_reserva = r.id_reserva
+                        WHERE rp.ci_participante = %s AND r.fecha = %s AND r.estado = 'Activa';
+                    """, (current_user.ci, reserva["fecha"]))
+                    if cursor.fetchone()["bloques"] >= 2:
+                        flash("No podés tener más de 2 horas de reserva por día.", "error")
+                        cursor.close(); conn.close()
+                        return render_template("unirme.html", usuario=current_user)
+
+                    # Límite semanal: 3 reservas activas
+                    hoy = date.today()
+                    inicio_semana = hoy - timedelta(days=hoy.weekday())  # lunes
+                    fin_semana = inicio_semana + timedelta(days=6)       # domingo
+
+                    cursor.execute("""
+                        SELECT COUNT(*) AS cantidad
+                        FROM reserva_participante rp
+                        JOIN reserva r ON rp.id_reserva = r.id_reserva
+                        WHERE rp.ci_participante = %s
+                          AND r.fecha BETWEEN %s AND %s
+                          AND r.estado = 'Activa';
+                    """, (current_user.ci, inicio_semana, fin_semana))
+                    if cursor.fetchone()["cantidad"] >= 3:
+                        flash("No podés tener más de 3 reservas activas esta semana.", "error")
+                        cursor.close(); conn.close()
+                        return render_template("unirme.html", usuario=current_user)
+
+                # Si pasa todas las validaciones, se une
+                cursor.execute("""
+                    INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva)
+                    VALUES (%s, %s, CURDATE());
+                """, (current_user.ci, id_reserva))
+                conn.commit()
+                flash("Te uniste correctamente a la sala.", "success")
+
+    cursor.close()
+    conn.close()
+    return render_template("unirme.html", usuario=current_user)
+
 
 
 @app.route("/logout")
