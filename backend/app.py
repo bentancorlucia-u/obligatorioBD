@@ -15,6 +15,7 @@ from utilidades import (
     validar_cedula_uruguaya,
     validar_email_institucional
 )
+from reportes import reportes_bp
 
 # Cargar las variables del archivo .env
 load_dotenv()
@@ -36,7 +37,10 @@ login_manager.login_message = "Por favor inicie sesión para acceder a esta pág
 login_manager.login_message_category = "warning"  # ⚠️ Amarillo
 
 
-
+# =================================================
+# REGISTRAR BLUEPRINTS
+# =================================================
+app.register_blueprint(reportes_bp)
 
 # ==================================================
 # FUNCIÓN PARA CARGAR USUARIO POR ID

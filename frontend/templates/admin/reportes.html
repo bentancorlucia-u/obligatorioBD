@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes y Métricas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="body-admin">
+  <a href="{{ url_for('admin') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+  <h2>Reportes y Métricas</h2>
+
+  <!-- ======================
+       FILTROS
+  ======================= -->
+  <form method="GET" class="form-horizontal filtros">
+    <div class="form-row">
+      <label>Desde:</label>
+      <input type="date" name="desde" value="{{ filtro_desde }}">
+    </div>
+
+    <div class="form-row">
+      <label>Hasta:</label>
+      <input type="date" name="hasta" value="{{ filtro_hasta }}">
+    </div>
+
+    <div class="form-row">
+      <label>Edificio:</label>
+      <select name="edificio">
+        <option value="todos">Todos</option>
+        {% for e in edificios %}
+          <option value="{{ e }}" {% if e == filtro_edificio %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>Tipo de sala:</label>
+      <select name="tipo_sala">
+        <option value="todas">Todas</option>
+        {% for t in tipos_sala %}
+          <option value="{{ t }}" {% if t == filtro_tipo_sala %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn-filtrar">Filtrar</button>
+  </form>
+
+  <!-- ======================
+       RESULTADOS
+  ======================= -->
+
+  <div class="reportes-container">
+
+    <!-- 1️⃣ Salas más reservadas -->
+    <section class="reporte-card">
+      <h3>1. Salas más reservadas</h3>
+      <table>
+        <thead>
+          <tr><th>Sala</th><th>Edificio</th><th>Cant. Reservas</th></tr>
+        </thead>
+        <tbody>
+          {% for r in q_salas_mas_reservadas %}
+            <tr><td>{{ r.nombre_sala }}</td><td>{{ r.edificio }}</td><td>{{ r.cantidad_reservas }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 2️⃣ Turnos más demandados -->
+    <section class="reporte-card">
+      <h3>2. Turnos más demandados</h3>
+      <table>
+        <thead><tr><th>Inicio</th><th>Fin</th><th>Reservas</th></tr></thead>
+        <tbody>
+          {% for r in q_turnos_mas_demandados %}
+            <tr><td>{{ r.hora_inicio }}</td><td>{{ r.hora_fin }}</td><td>{{ r.reservas }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3️⃣ Promedio de participantes -->
+    <section class="reporte-card">
+      <h3>3. Promedio de participantes por sala</h3>
+      <table>
+        <thead><tr><th>Sala</th><th>Edificio</th><th>Promedio</th></tr></thead>
+        <tbody>
+          {% for r in q_prom_participantes %}
+            <tr><td>{{ r.nombre_sala }}</td><td>{{ r.edificio }}</td><td>{{ r.promedio_participantes }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 4️⃣ Reservas por carrera y facultad -->
+    <section class="reporte-card">
+      <h3>4. Cantidad de reservas por carrera y facultad</h3>
+      <table>
+        <thead><tr><th>Programa</th><th>Facultad</th><th>Reservas</th></tr></thead>
+        <tbody>
+          {% for r in q_reservas_carrera_facultad %}
+            <tr><td>{{ r.nombre_programa }}</td><td>{{ r.facultad }}</td><td>{{ r.reservas }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5️⃣ Ocupación por edificio -->
+    <section class="reporte-card">
+      <h3>5. Porcentaje de ocupación de salas por edificio</h3>
+      <table>
+        <thead><tr><th>Edificio</th><th>% Ocupación</th></tr></thead>
+        <tbody>
+          {% for r in q_ocupacion_por_edificio %}
+            <tr><td>{{ r.edificio }}</td><td>{{ r.porcentaje_ocupacion }}%</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 6️⃣ Reservas y asistencias -->
+    <section class="reporte-card">
+      <h3>6. Reservas y asistencias por rol/tipo</h3>
+      <table>
+        <thead><tr><th>Rol</th><th>Tipo</th><th>Reservas</th><th>Asistencias</th></tr></thead>
+        <tbody>
+          {% for r in q_reservas_asistencias %}
+            <tr><td>{{ r.rol }}</td><td>{{ r.tipo }}</td><td>{{ r.reservas }}</td><td>{{ r.asistencias }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 7️⃣ Sanciones -->
+    <section class="reporte-card">
+      <h3>7. Cantidad de sanciones por tipo de persona</h3>
+      <table>
+        <thead><tr><th>Rol</th><th>Tipo</th><th>Sanciones</th></tr></thead>
+        <tbody>
+          {% for r in q_sanciones %}
+            <tr><td>{{ r.rol }}</td><td>{{ r.tipo }}</td><td>{{ r.sanciones }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 8️⃣ Estado de reservas -->
+    <section class="reporte-card">
+      <h3>8. Porcentaje de reservas por estado</h3>
+      <table>
+        <thead><tr><th>Estado</th><th>%</th></tr></thead>
+        <tbody>
+          {% for r in q_porcentaje_estado %}
+            <tr><td>{{ r.estado }}</td><td>{{ r.porcentaje }}%</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 9️⃣ Tasa de cancelación -->
+    <section class="reporte-card">
+      <h3>9. Salas con mayor tasa de cancelación</h3>
+      <table>
+        <thead><tr><th>Sala</th><th>Edificio</th><th>Tasa Cancelación (%)</th></tr></thead>
+        <tbody>
+          {% for r in q_tasa_cancelacion %}
+            <tr><td>{{ r.nombre_sala }}</td><td>{{ r.edificio }}</td><td>{{ r.tasa_cancelacion }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 🔟 Top participantes -->
+    <section class="reporte-card">
+      <h3>10. Top participantes con más reservas confirmadas</h3>
+      <table>
+        <thead><tr><th>CI</th><th>Nombre</th><th>Apellido</th><th>Reservas</th></tr></thead>
+        <tbody>
+          {% for r in q_top_participantes %}
+            <tr><td>{{ r.ci }}</td><td>{{ r.nombre }}</td><td>{{ r.apellido }}</td><td>{{ r.reservas_confirmadas }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 11️⃣ Antelación promedio -->
+    <section class="reporte-card">
+      <h3>11. Antelación promedio de reserva</h3>
+      <p class="metric">
+        {{ q_antelacion.antelacion_promedio_dias }} días
+      </p>
+    </section>
+  </div>
+</body>
+</html>

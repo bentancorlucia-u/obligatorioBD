@@ -1588,6 +1588,113 @@ body.body-admin table.tabla-admin .btn-eliminar:hover {
   background-color: rgb(222.7808219178, 45.698630137, 27.4191780822);
 }
 
+.body-admin {
+  font-family: "Rubik", sans-serif;
+  background-color: #f3f6fa;
+  color: #173363;
+  padding: 3rem 2rem;
+}
+.body-admin h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+.body-admin .filtros {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  gap: 1.5rem;
+  justify-content: center;
+  background: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 3rem;
+}
+.body-admin .filtros .form-row {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+}
+.body-admin .filtros .form-row label {
+  margin: 0;
+  margin-bottom: 0.3rem;
+  color: #173363;
+}
+.body-admin .filtros .form-row input, .body-admin .filtros .form-row select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  color: #173363;
+}
+.body-admin .filtros .btn-filtrar {
+  background: #173363;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 600;
+}
+.body-admin .filtros .btn-filtrar:hover {
+  background: rgb(13.3852459016, 29.6803278689, 57.6147540984);
+}
+
+.body-admin .reportes-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  justify-content: center;
+}
+.body-admin .reportes-container .reporte-card {
+  background: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.8s ease;
+  max-width: 100%;
+}
+.body-admin .reportes-container .reporte-card:hover {
+  transform: translateY(-3px);
+  background-color: rgba(0, 171, 232, 0.08);
+}
+.body-admin .reportes-container .reporte-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #173363;
+  margin-bottom: 0.7rem;
+}
+.body-admin .reportes-container .reporte-card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: center;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.body-admin .reportes-container .reporte-card table th {
+  background-color: #173363;
+  color: white;
+  font-weight: 600;
+}
+.body-admin .reportes-container .reporte-card table td {
+  border-top: 1px solid #eee;
+}
+.body-admin .reportes-container .reporte-card table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+.body-admin .reportes-container .reporte-card table tr:hover {
+  background-color: rgba(0, 171, 232, 0.08);
+}
+.body-admin .reportes-container .reporte-card .metric {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #173363;
+}
+
 * {
   margin: 0;
   padding: 0;
