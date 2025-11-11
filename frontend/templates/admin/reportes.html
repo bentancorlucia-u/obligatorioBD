@@ -78,7 +78,16 @@
         <thead><tr><th>Inicio</th><th>Fin</th><th>Reservas</th></tr></thead>
         <tbody>
           {% for r in q_turnos_mas_demandados %}
-            <tr><td>{{ r.hora_inicio }}</td><td>{{ r.hora_fin }}</td><td>{{ r.reservas }}</td></tr>
+            {% set inicio_horas = (r.hora_inicio.total_seconds() // 3600) | int %}
+            {% set inicio_minutos = ((r.hora_inicio.total_seconds() % 3600) // 60) | int %}
+            {% set fin_horas = (r.hora_fin.total_seconds() // 3600) | int %}
+            {% set fin_minutos = ((r.hora_fin.total_seconds() % 3600) // 60) | int %}
+
+            <tr>
+                <td>{{ "%02d:%02d" % (inicio_horas, inicio_minutos) }}</td>
+                <td>{{ "%02d:%02d" % (fin_horas, fin_minutos) }}</td>
+                <td>{{ r.reservas }}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
