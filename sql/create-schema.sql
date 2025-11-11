@@ -140,4 +140,24 @@ ALTER TABLE sala
 ADD CONSTRAINT chk_capacidad_positiva
 CHECK (capacidad > 0);
 
+SHOW CREATE TABLE reserva_participante;
+
+-- Eliminar las FKs actuales
+ALTER TABLE reserva_participante
+DROP FOREIGN KEY reserva_participante_ibfk_1,
+DROP FOREIGN KEY reserva_participante_ibfk_2;
+
+-- Crear las nuevas con ON DELETE/UPDATE CASCADE
+ALTER TABLE reserva_participante
+ADD CONSTRAINT fk_reserva_participante_ci
+FOREIGN KEY (ci_participante)
+REFERENCES participantes(ci)
+ON DELETE CASCADE
+ON UPDATE CASCADE,
+ADD CONSTRAINT fk_reserva_participante_reserva
+FOREIGN KEY (id_reserva)
+REFERENCES reserva(id_reserva)
+ON DELETE CASCADE
+ON UPDATE CASCADE;
+
 

@@ -69,7 +69,7 @@ def login():
 
                 # Verificar si es el administrador
                 if logged_user.email == "administrativo@ucu.edu.uy":
-                    return redirect(url_for("home_admin"))
+                    return redirect(url_for("admin"))
                 else:
                     return redirect(url_for("home"))
 
@@ -120,7 +120,7 @@ def home():
     return render_template(
         "home.html",
         usuario=current_user,
-        tipo_persona=tipo["tipo_persona"] if tipo else "Desconocido"
+        tipo_persona=tipo["tipo_persona"] if tipo else "Perfil administrador"
     )
 
 @app.route("/reservar", methods=["GET", "POST"])
@@ -398,9 +398,9 @@ def unirme():
 # RUTAS PANEL ADMINISTRADOR
 # ==================================================
 
-@app.route("/home-admin")
+@app.route("/admin")
 @login_required
-def home_admin():
+def admin():
     # Solo el admin puede acceder
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
@@ -605,15 +605,26 @@ def abm_salas():
         edificio = request.form["edificio"]
         tipo_sala = request.form["tipo_sala"]
 
-        # Validar capacidad
+        # Validar capacidad (entero positivo)
         try:
             capacidad = int(request.form["capacidad"])
             if capacidad <= 0:
-                raise ValueError("Capacidad debe ser un número entero positivo.")
+                raise ValueError
         except ValueError:
             flash("La capacidad debe ser un número entero positivo.", "error")
             return redirect(url_for("abm_salas"))
 
+        # Verificar si ya existe una sala con ese nombre y edificio
+        cursor.execute("""
+            SELECT COUNT(*) AS existe 
+            FROM sala 
+            WHERE nombre_sala = %s AND edificio = %s;
+        """, (nombre_sala, edificio))
+        if cursor.fetchone()["existe"] > 0:
+            flash("Ya existe una sala con ese nombre en este edificio.", "warning")
+            return redirect(url_for("abm_salas"))
+
+        # Insertar si no existe
         try:
             cursor.execute("""
                 INSERT INTO sala (nombre_sala, edificio, capacidad, tipo_sala)
@@ -624,6 +635,7 @@ def abm_salas():
         except Exception as e:
             conn.rollback()
             flash(f"Error al agregar sala: {e}", "error")
+
 
     # =========================================
     # ELIMINAR
@@ -682,13 +694,310 @@ def abm_salas():
     return render_template("admin/abm_salas.html", salas=salas, edificios=edificios)
 
 
-@app.route("/admin/reservas")
+@app.route("/admin/reservas", methods=["GET", "POST"])
 @login_required
 def abm_reservas():
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
 
-    return render_template("admin/abm_reservas.html", usuario=current_user)
+    conn = get_connection("administrativo")
+    cursor = conn.cursor(dictionary=True)
+
+    # 🔹 Obtener edificios y turnos para los selects
+    cursor.execute("SELECT nombre_edificio FROM edificio;")
+    edificios = [e["nombre_edificio"] for e in cursor.fetchall()]
+
+    cursor.execute("SELECT id_turno, hora_inicio, hora_fin FROM turno;")
+    turnos = cursor.fetchall()
+
+    # =========================================
+    # ALTA DE RESERVA
+    # =========================================
+    if request.method == "POST" and request.form.get("accion") == "agregar":
+        edificio = request.form["edificio"]
+        nombre_sala = request.form["nombre_sala"]
+        fecha = request.form["fecha"]
+        id_turno = request.form["id_turno"]
+        ci_participante = request.form["ci_participante"].strip()
+
+        try:
+            # =======================================
+            # Validar formato de CI (solo números, 7–8 dígitos)
+            # =======================================
+            if not ci_participante.isdigit() or len(ci_participante) not in (7, 8):
+                flash("La CI debe tener solo números y 7 u 8 dígitos.", "warning")
+                return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Verificar existencia del participante
+            # =======================================
+            cursor.execute("SELECT ci FROM participantes WHERE ci = %s;", (ci_participante,))
+            participante = cursor.fetchone()
+            if not participante:
+                flash("No existe ningún participante con esa CI.", "error")
+                return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Verificar tipo del participante (grado, posgrado o docente)
+            # =======================================
+            cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN ppa.rol = 'Docente' THEN 'Docente'
+                        WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'grado' THEN 'Grado'
+                        WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'posgrado' THEN 'Posgrado'
+                        ELSE 'Desconocido'
+                    END AS tipo_persona
+                FROM participantes_programa_academico ppa
+                JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa
+                WHERE ppa.ci_participante = %s
+                LIMIT 1;
+            """, (ci_participante,))
+            tipo_persona = cursor.fetchone()
+
+            if not tipo_persona:
+                flash("No se pudo determinar el tipo de participante.", "error")
+                return redirect(url_for("abm_reservas"))
+
+            tipo_persona = tipo_persona["tipo_persona"]
+
+            # =======================================
+            # Verificar tipo de sala
+            # =======================================
+            cursor.execute("""
+                SELECT tipo_sala FROM sala
+                WHERE nombre_sala = %s AND edificio = %s;
+            """, (nombre_sala, edificio))
+            tipo_sala = cursor.fetchone()["tipo_sala"]
+
+            if tipo_sala == "Docente" and tipo_persona != "Docente":
+                flash("Solo docentes pueden reservar salas de tipo Docente.", "error")
+                return redirect(url_for("abm_reservas"))
+
+            if tipo_sala == "Posgrado" and tipo_persona != "Posgrado":
+                flash("Solo estudiantes de posgrado o docentes pueden reservar salas de posgrado.", "error")
+                return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Verificar sanciones activas
+            # =======================================
+            cursor.execute("""
+                SELECT 1
+                FROM sancion_participante
+                WHERE ci_participante = %s
+                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
+            """, (ci_participante,))
+            sancionado = cursor.fetchone()
+
+            if sancionado:
+                flash("Este participante tiene una sanción activa y no puede realizar reservas.", "error")
+                return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Verificar límite de horas diarias y reservas semanales (solo grado)
+            # =======================================
+            if tipo_persona == "Grado":
+                # Verificar horas diarias (máx. 2 horas)
+                cursor.execute("""
+                    SELECT COUNT(*) AS cantidad
+                    FROM reserva r
+                    JOIN turno t ON r.id_turno = t.id_turno
+                    JOIN reserva_participante rp ON rp.id_reserva = r.id_reserva
+                    WHERE rp.ci_participante = %s
+                    AND r.fecha = %s
+                    AND r.estado = 'Activa';
+                """, (ci_participante, fecha))
+                reservas_hoy = cursor.fetchone()["cantidad"]
+
+                if reservas_hoy >= 2:
+                    flash("Límite diario alcanzado (máximo 2 horas por día).", "warning")
+                    return redirect(url_for("abm_reservas"))
+
+                # Verificar reservas semanales (máx. 3 activas)
+                cursor.execute("""
+                    SELECT COUNT(*) AS cantidad
+                    FROM reserva r
+                    JOIN reserva_participante rp ON rp.id_reserva = r.id_reserva
+                    WHERE rp.ci_participante = %s
+                    AND r.estado = 'Activa'
+                    AND WEEK(r.fecha) = WEEK(%s)
+                    AND YEAR(r.fecha) = YEAR(%s);
+                """, (ci_participante, fecha, fecha))
+                reservas_semana = cursor.fetchone()["cantidad"]
+
+                if reservas_semana >= 3:
+                    flash("📅 Límite semanal alcanzado (máximo 3 reservas activas por semana).", "warning")
+                    return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Verificar si ya existe reserva activa igual (sala + fecha + turno)
+            # =======================================
+            cursor.execute("""
+                SELECT 1 FROM reserva
+                WHERE nombre_sala = %s AND edificio = %s AND fecha = %s AND id_turno = %s
+                AND estado IN ('Activa', 'Pendiente');
+            """, (nombre_sala, edificio, fecha, id_turno))
+            existe = cursor.fetchone()
+
+            if existe:
+                flash("Ya existe una reserva activa para esa sala, fecha y turno.", "warning")
+                return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Insertar reserva y asociar participante
+            # =======================================
+            cursor.execute("""
+                INSERT INTO reserva (nombre_sala, edificio, fecha, id_turno, estado)
+                VALUES (%s, %s, %s, %s, 'Activa');
+            """, (nombre_sala, edificio, fecha, id_turno))
+            conn.commit()
+
+            cursor.execute("SELECT LAST_INSERT_ID() AS id_reserva;")
+            nueva_reserva = cursor.fetchone()["id_reserva"]
+
+            cursor.execute("""
+                INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva, asistencia)
+                VALUES (%s, %s, NOW(), TRUE);
+            """, (ci_participante, nueva_reserva))
+            conn.commit()
+
+            flash("Reserva creada correctamente y participante asociado.", "success")
+
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al crear la reserva: {e}", "error")
+
+
+    # =========================================
+    # BAJA DE RESERVA
+    # =========================================
+    if request.method == "POST" and request.form.get("accion") == "eliminar":
+        id_reserva = request.form["id_reserva"]
+        try:
+            # Cambiar estado a Cancelada
+            cursor.execute("""
+                UPDATE reserva
+                SET estado = 'Cancelada'
+                WHERE id_reserva = %s;
+            """, (id_reserva,))
+
+            # Eliminar los participantes asociados
+            cursor.execute("""
+                DELETE FROM reserva_participante
+                WHERE id_reserva = %s;
+            """, (id_reserva,))
+
+            conn.commit()
+            flash("Reserva cancelada y participantes eliminados correctamente.", "success")
+
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al cancelar la reserva: {e}", "error")
+
+    # =========================================
+    # MODIFICAR RESERVA
+    # =========================================
+    if request.method == "POST" and request.form.get("accion") == "modificar":
+        id_reserva = request.form.get("id_reserva")
+        nuevo_estado = request.form.get("estado_nuevo")
+        id_turno_nuevo = request.form.get("id_turno_nuevo")
+        fecha_nueva = request.form.get("fecha_nueva")
+
+        try:
+            # Obtener datos actuales
+            cursor.execute("""
+                SELECT nombre_sala, edificio
+                FROM reserva
+                WHERE id_reserva = %s;
+            """, (id_reserva,))
+            datos = cursor.fetchone()
+
+            if not datos:
+                flash("No se encontró la reserva seleccionada.", "error")
+            else:
+                nombre_sala = datos["nombre_sala"]
+                edificio = datos["edificio"]
+
+                # Verificar si ya hay reserva activa con esa misma sala, edificio, fecha y turno
+                cursor.execute("""
+                    SELECT 1 FROM reserva
+                    WHERE nombre_sala = %s
+                    AND edificio = %s
+                    AND fecha = %s
+                    AND id_turno = %s
+                    AND estado = 'Activa'
+                    AND id_reserva <> %s;
+                """, (nombre_sala, edificio, fecha_nueva, id_turno_nuevo, id_reserva))
+                ocupada = cursor.fetchone()
+
+                if ocupada:
+                    flash("⚠️ Ya existe una reserva activa en esa sala, fecha y turno.", "warning")
+                else:
+                    # Actualizar la reserva (fecha, turno y estado)
+                    cursor.execute("""
+                        UPDATE reserva
+                        SET fecha = %s, id_turno = %s, estado = %s
+                        WHERE id_reserva = %s;
+                    """, (fecha_nueva, id_turno_nuevo, nuevo_estado, id_reserva))
+                    conn.commit()
+
+                    flash("Reserva actualizada correctamente.", "success")
+
+                    # 🔹 Si se canceló, borrar los participantes asociados
+                    if nuevo_estado.lower() == "cancelada":
+                        cursor.execute("""
+                            DELETE FROM reserva_participante WHERE id_reserva = %s;
+                        """, (id_reserva,))
+                        conn.commit()
+                        flash("Reserva cancelada y participantes eliminados.", "success")
+
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al modificar la reserva: {e}", "error")
+
+    # =========================================
+    # LISTADO DE RESERVAS
+    # =========================================
+    cursor.execute("""
+        SELECT r.id_reserva, r.id_turno, r.fecha, 
+            t.hora_inicio, t.hora_fin,
+            r.estado, r.nombre_sala, r.edificio,
+            s.capacidad,
+            COUNT(rp.ci_participante) AS ocupacion
+        FROM reserva r
+        JOIN turno t ON r.id_turno = t.id_turno
+        JOIN sala s ON r.nombre_sala = s.nombre_sala AND r.edificio = s.edificio
+        LEFT JOIN reserva_participante rp ON r.id_reserva = rp.id_reserva
+        WHERE r.estado = 'Activa'
+        GROUP BY r.id_reserva
+        ORDER BY r.fecha DESC;
+    """)
+    reservas = cursor.fetchall()
+
+    # 🔹 Obtener salas filtradas por edificio (para JS dinámico)
+    cursor.execute("""
+        SELECT nombre_sala, edificio
+        FROM sala;
+    """)
+    salas_por_edificio = {}
+    for row in cursor.fetchall():
+        salas_por_edificio.setdefault(row["edificio"], []).append(row["nombre_sala"])
+
+    conn.close()
+    return render_template("admin/abm_reservas.html",
+                           reservas=reservas,
+                           edificios=edificios,
+                           turnos=turnos,
+                           salas_por_edificio=salas_por_edificio)
+
+@app.route("/admin/reservas/participantes", methods=["GET", "POST"])
+@login_required
+def abm_reservas_participantes():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    return render_template("admin/abm_reservas-participantes.html", usuario=current_user)
+
 
 
 @app.route("/admin/sanciones")

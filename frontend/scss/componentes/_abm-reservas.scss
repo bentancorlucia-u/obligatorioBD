@@ -1,0 +1,256 @@
+/* ===========================
+   ABM de Reservas
+   =========================== */
+
+body.body-admin {
+  font-family: "Rubik", sans-serif;
+  background-color: $gris-claro;
+  color: $azul-oscuro;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+
+  h2 {
+    font-size: 2.3rem;
+    font-weight: 700;
+    color: $azul-oscuro;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  /* ===========================
+     Formulario de alta
+     =========================== */
+  form.form-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem !important;
+    background-color: $blanco;
+    padding: 2rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 95%;
+    max-width: 1500px;
+    margin-bottom: 3rem;
+
+    label {
+      font-weight: 600;
+      color: $azul-oscuro;
+      margin-left: 1rem;
+    }
+
+    input,
+    select {
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      background-color: #fff;
+      color: #333;
+      outline: none;
+
+      &:focus {
+        border-color: $azul-oscuro;
+        box-shadow: 0 0 4px rgba($azul-oscuro, 0.3);
+      }
+    }
+
+    .btn-agregar {
+      background-color: #16386d; /* azul elegante */
+      color: $blanco;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.4rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        background-color: darken(#16386d, 8%);
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    #ci_participante {
+    width: 110px; /* 🔹 ajustá según el espacio */
+    min-width: 90px;
+    text-align: center;
+    }
+  }
+
+  /* ===========================
+     Tabla
+     =========================== */
+  table {
+    width: 90%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #fff;
+
+    th {
+      background-color: #16386d;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 14px 18px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    td {
+      padding: 12px 18px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tbody tr:hover {
+      background-color: #e8f0fe;
+      transition: 0.2s ease-in-out;
+    }
+
+    /* 🔹 Inputs y selects dentro de la tabla */
+    input,
+    select {
+      padding: 0.45rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #d0d0d0;
+      background-color: #fff;
+      font-size: 0.9rem;
+      color: #333;
+      width: 100%;
+      max-width: 160px;
+      transition: all 0.25s ease;
+      text-align: center;
+      box-shadow: 0 0 0 transparent;
+
+      &:hover {
+        border-color: #16386d;
+        box-shadow: 0 0 4px rgba(22, 56, 109, 0.15);
+      }
+
+      &:focus {
+        border-color: #16386d;
+        box-shadow: 0 0 6px rgba(22, 56, 109, 0.25);
+        outline: none;
+      }
+
+      &:disabled {
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      &::placeholder {
+        color: #999;
+      }
+    }
+
+    /* Ajuste visual de inputs tipo número o fecha */
+    input[type="number"],
+    input[type="date"] {
+      text-align: center;
+    }
+  }
+
+  /* ===========================
+     Botón guardar
+     =========================== */
+  .btn-agregar {
+    background-color: #16386d;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(22, 56, 109, 0.25);
+
+    &:hover {
+      background-color: darken(#16386d, 8%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(22, 56, 109, 0.35);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(22, 56, 109, 0.3);
+    }
+  }
+
+  /* ===========================
+     Mensajes y filas por estado
+     =========================== */
+  p {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 16px;
+    color: #666;
+  }
+
+  .mensaje {
+    color: $azul-oscuro;
+    font-size: 1.2rem;
+    margin-top: 2rem;
+  }
+
+  table tr.activa td {
+    background-color: #eaffea; /* verde claro */
+  }
+
+  table tr.cancelada td {
+    background-color: #ffe5e5; /* rojo claro */
+  }
+
+  table tr.finalizada td {
+    background-color: #f7f7f7; /* gris suave */
+  }
+
+  /* ===========================
+     Responsivo
+     =========================== */
+  @media (max-width: 700px) {
+    form.form-horizontal {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    table {
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+    }
+
+    .btn-agregar,
+    .btn-eliminar {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

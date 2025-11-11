@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Reservas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="body-admin">
+    <a href="{{ url_for('admin') }}" class="btn-volver-inicio">Volver al inicio</a>
+    
+    <h2>Administración de reservas activas</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container margin-bottom">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulario de alta -->
+    <form method="POST" class="form-horizontal">
+        <input type="hidden" name="accion" value="agregar">
+
+        <div class="form-row">
+            <label for="edificio">Edificio:</label>
+            <select id="edificio" name="edificio" required onchange="actualizarSalas()">
+                <option value="" disabled selected>Seleccionar...</option>
+                {% for e in edificios %}
+                    <option value="{{ e }}">{{ e }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="nombre_sala">Sala:</label>
+            <select id="nombre_sala" name="nombre_sala" required>
+                <option value="" disabled selected>Seleccionar...</option>
+            </select>
+
+            <label for="fecha">Fecha:</label>
+            <input type="date" name="fecha" required>
+
+            <label for="id_turno">Turno:</label>
+            <select name="id_turno" required>
+                {% for t in turnos %}
+                    {% set inicio_horas = (t.hora_inicio.total_seconds() // 3600) | int %}
+                    {% set inicio_minutos = ((t.hora_inicio.total_seconds() % 3600) // 60) | int %}
+                    {% set fin_horas = (t.hora_fin.total_seconds() // 3600) | int %}
+                    {% set fin_minutos = ((t.hora_fin.total_seconds() % 3600) // 60) | int %}
+
+                    <option value="{{ t.id_turno }}">
+                        {{ "%02d:%02d" % (inicio_horas, inicio_minutos) }} - {{ "%02d:%02d" % (fin_horas, fin_minutos) }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label for="ci_participante">CI del participante:</label>
+            <input 
+            type="text" 
+            id="ci_participante" 
+            name="ci_participante" 
+            placeholder="Ej: 45678901" 
+            required
+            pattern="^[0-9]{7,8}$"
+            title="Ingrese una cédula uruguaya válida">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <button type="submit" class="btn-agregar">Nueva Reserva</button>
+        </div>
+    </form>
+
+    <!-- Tabla de reservas -->
+    <table class="tabla-admin">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Edificio</th>
+            <th>Sala</th>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Ocupación</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in reservas %}
+        <tr>
+        <td>{{ r.id_reserva }}</td>
+        <td>{{ r.edificio }}</td>
+        <td>{{ r.nombre_sala }}</td>
+        <td>
+        <input 
+            type="date" 
+            name="fecha_nueva" 
+            value="{{ r.fecha.strftime('%Y-%m-%d') }}" 
+            required>
+        </td>
+
+        <!-- Turno -->
+        <td>
+            <form method="POST">
+            <input type="hidden" name="accion" value="modificar">
+            <input type="hidden" name="id_reserva" value="{{ r.id_reserva }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <select name="id_turno_nuevo">
+                {% for t in turnos %}
+                {% set inicio_horas_t = (t.hora_inicio.total_seconds() // 3600) | int %}
+                {% set inicio_minutos_t = ((t.hora_inicio.total_seconds() % 3600) // 60) | int %}
+                {% set fin_horas_t = (t.hora_fin.total_seconds() // 3600) | int %}
+                {% set fin_minutos_t = ((t.hora_fin.total_seconds() % 3600) // 60) | int %}
+                <option value="{{ t.id_turno }}" {% if t.id_turno == r.id_turno %}selected{% endif %}>
+                {{ "%02d:%02d" % (inicio_horas_t, inicio_minutos_t) }} - {{ "%02d:%02d" % (fin_horas_t, fin_minutos_t) }}
+                </option>
+                {% endfor %}
+            </select>
+        </td>
+
+        <!-- Ocupación -->
+        <td><strong>{{ r.ocupacion }}</strong>/{{ r.capacidad }}</td>
+
+        <!-- Estado -->
+        <td>
+            <select name="estado_nuevo">
+                {% for estado in ['Activa', 'Cancelada', 'Finalizada', 'Sin asistencia'] %}
+                <option value="{{ estado }}" {% if r.estado == estado %}selected{% endif %}>{{ estado }}</option>
+                {% endfor %}
+            </select>
+        </td>
+
+        <!-- Guardar -->
+        <td>
+            <button type="submit" class="btn-agregar">Guardar cambios</button>
+            </form>
+        </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{url_for('abm_reservas_participantes')}}" class="btn-logout">Administrar participantes de las reservas</a>
+
+    <!-- Script para salas dinámicas -->
+    <script id="salas-data" type="application/json">
+        {{ salas_por_edificio | tojson | safe }}
+    </script>
+
+    <script>
+        function actualizarSalas() {
+            const data = JSON.parse(document.getElementById("salas-data").textContent);
+            const edificio = document.getElementById("edificio").value;
+            const selectSala = document.getElementById("nombre_sala");
+
+            selectSala.innerHTML = '<option disabled selected>Seleccionar...</option>';
+            if (data[edificio]) {
+                data[edificio].forEach(s => {
+                    const opt = document.createElement("option");
+                    opt.value = s;
+                    opt.textContent = s;
+                    selectSala.appendChild(opt);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

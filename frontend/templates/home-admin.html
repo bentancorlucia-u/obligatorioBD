@@ -14,7 +14,7 @@
 <body class="body-home">
 
     <h1>Hola, {{ current_user.nombre }} {{ current_user.apellido }}</h1>
-    <p class="tipo-usuario">Administrador</p>
+    <p class="tipo-usuario">Perfil administrador</p>
     <div class="cards">
         <a href="{{ url_for('abm_participantes') }}" class="card">Administrar Participantes</a>
         <a href="{{ url_for('abm_salas') }}" class="card">Administrar Salas</a>

@@ -6,8 +6,19 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="datos">
-  <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+  <a href="{{ url_for('admin') }}" class="btn-volver-inicio">Volver al inicio</a>
   <h2>Administración de Salas</h2>
+
+  <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container margin-bottom">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
   <!-- Formulario de alta -->
   <form method="POST" class="form-horizontal">
@@ -29,8 +40,8 @@
         <option value="Posgrado">Posgrado</option>
         <option value="Docente">Docente</option>
       </select>
-
-      <button type="submit" class="btn-agregar">Agregar</button>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-agregar">Nueva Sala</button>
     </div>
   </form>
 
@@ -65,7 +76,8 @@
             <input type="hidden" name="nombre_sala" value="{{ s.nombre_sala }}">
             <input type="hidden" name="edificio" value="{{ s.edificio }}">
 
-            <button type="submit" name="accion" value="editar" class="btn-editar">Editar</button>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" name="accion" value="editar" class="btn-editar">Guardar cambios</button>
             <button type="submit" name="accion" value="eliminar" class="btn-eliminar">Eliminar</button>
           </td>
         </form>

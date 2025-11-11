@@ -998,6 +998,248 @@ input[type=number]::-webkit-outer-spin-button {
   background-color: #b71c1c;
 }
 
+/* ===========================
+   ABM de Reservas
+   =========================== */
+body.body-admin {
+  font-family: "Rubik", sans-serif;
+  background-color: #f3f6fa;
+  color: #173363;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+body.body-admin h2 {
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: #173363;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+body.body-admin {
+  /* ===========================
+     Formulario de alta
+     =========================== */
+}
+body.body-admin form.form-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem !important;
+  background-color: #ffffff;
+  padding: 2rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 95%;
+  max-width: 1500px;
+  margin-bottom: 3rem;
+}
+body.body-admin form.form-horizontal label {
+  font-weight: 600;
+  color: #173363;
+  margin-left: 1rem;
+}
+body.body-admin form.form-horizontal input,
+body.body-admin form.form-horizontal select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #333;
+  outline: none;
+}
+body.body-admin form.form-horizontal input:focus,
+body.body-admin form.form-horizontal select:focus {
+  border-color: #173363;
+  box-shadow: 0 0 4px rgba(23, 51, 99, 0.3);
+}
+body.body-admin form.form-horizontal .btn-agregar {
+  background-color: #16386d; /* azul elegante */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+body.body-admin form.form-horizontal .btn-agregar:hover {
+  background-color: rgb(15.1480916031, 38.558778626, 75.0519083969);
+  transform: translateY(-2px);
+}
+body.body-admin form.form-horizontal .btn-agregar:active {
+  transform: translateY(0);
+}
+body.body-admin form.form-horizontal #ci_participante {
+  width: 110px; /* 🔹 ajustá según el espacio */
+  min-width: 90px;
+  text-align: center;
+}
+body.body-admin {
+  /* ===========================
+     Tabla
+     =========================== */
+}
+body.body-admin table {
+  width: 90%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+}
+body.body-admin table th {
+  background-color: #16386d;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  text-align: center;
+  font-size: 15px;
+}
+body.body-admin table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  text-align: center;
+}
+body.body-admin table td:first-child,
+body.body-admin table th:first-child {
+  text-align: left;
+}
+body.body-admin table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+body.body-admin table tbody tr:hover {
+  background-color: #e8f0fe;
+  transition: 0.2s ease-in-out;
+}
+body.body-admin table {
+  /* 🔹 Inputs y selects dentro de la tabla */
+}
+body.body-admin table input,
+body.body-admin table select {
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #d0d0d0;
+  background-color: #fff;
+  font-size: 0.9rem;
+  color: #333;
+  width: 100%;
+  max-width: 160px;
+  transition: all 0.25s ease;
+  text-align: center;
+  box-shadow: 0 0 0 transparent;
+}
+body.body-admin table input:hover,
+body.body-admin table select:hover {
+  border-color: #16386d;
+  box-shadow: 0 0 4px rgba(22, 56, 109, 0.15);
+}
+body.body-admin table input:focus,
+body.body-admin table select:focus {
+  border-color: #16386d;
+  box-shadow: 0 0 6px rgba(22, 56, 109, 0.25);
+  outline: none;
+}
+body.body-admin table input:disabled,
+body.body-admin table select:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+body.body-admin table input::placeholder,
+body.body-admin table select::placeholder {
+  color: #999;
+}
+body.body-admin table {
+  /* Ajuste visual de inputs tipo número o fecha */
+}
+body.body-admin table input[type=number],
+body.body-admin table input[type=date] {
+  text-align: center;
+}
+body.body-admin {
+  /* ===========================
+     Botón guardar
+     =========================== */
+}
+body.body-admin .btn-agregar {
+  background-color: #16386d;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(22, 56, 109, 0.25);
+}
+body.body-admin .btn-agregar:hover {
+  background-color: rgb(15.1480916031, 38.558778626, 75.0519083969);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(22, 56, 109, 0.35);
+}
+body.body-admin .btn-agregar:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(22, 56, 109, 0.3);
+}
+body.body-admin {
+  /* ===========================
+     Mensajes y filas por estado
+     =========================== */
+}
+body.body-admin p {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 16px;
+  color: #666;
+}
+body.body-admin .mensaje {
+  color: #173363;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+}
+body.body-admin table tr.activa td {
+  background-color: #eaffea; /* verde claro */
+}
+body.body-admin table tr.cancelada td {
+  background-color: #ffe5e5; /* rojo claro */
+}
+body.body-admin table tr.finalizada td {
+  background-color: #f7f7f7; /* gris suave */
+}
+body.body-admin {
+  /* ===========================
+     Responsivo
+     =========================== */
+}
+@media (max-width: 700px) {
+  body.body-admin form.form-horizontal {
+    flex-direction: column;
+    width: 100%;
+  }
+  body.body-admin table {
+    font-size: 13px;
+  }
+  body.body-admin th,
+  body.body-admin td {
+    padding: 10px;
+  }
+  body.body-admin .btn-agregar,
+  body.body-admin .btn-eliminar {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
