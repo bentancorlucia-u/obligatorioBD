@@ -737,6 +737,18 @@ def abm_reservas():
                 flash("No existe ningún participante con esa CI.", "error")
                 return redirect(url_for("abm_reservas"))
 
+            # 🔹 Nuevo: verificar que esté en un programa académico
+            cursor.execute("""
+                SELECT 1
+                FROM participantes_programa_academico
+                WHERE ci_participante = %s;
+            """, (ci_participante,))
+            pertenece_programa = cursor.fetchone()
+
+            if not pertenece_programa:
+                flash("El participante no pertenece a ningún programa académico.", "warning")
+                return redirect(url_for("abm_reservas"))
+
             # =======================================
             # Verificar tipo del participante (grado, posgrado o docente)
             # =======================================
@@ -771,11 +783,11 @@ def abm_reservas():
             tipo_sala = cursor.fetchone()["tipo_sala"]
 
             if tipo_sala == "Docente" and tipo_persona != "Docente":
-                flash("Solo docentes pueden reservar salas de tipo Docente.", "error")
+                flash("Solo docentes pueden reservar esta sala.", "error")
                 return redirect(url_for("abm_reservas"))
 
             if tipo_sala == "Posgrado" and tipo_persona != "Posgrado":
-                flash("Solo estudiantes de posgrado o docentes pueden reservar salas de posgrado.", "error")
+                flash("Solo estudiantes de posgrado pueden reservar esta sala.", "error")
                 return redirect(url_for("abm_reservas"))
 
             # =======================================
@@ -826,7 +838,7 @@ def abm_reservas():
                 reservas_semana = cursor.fetchone()["cantidad"]
 
                 if reservas_semana >= 3:
-                    flash("📅 Límite semanal alcanzado (máximo 3 reservas activas por semana).", "warning")
+                    flash("Límite semanal alcanzado (máximo 3 reservas activas por semana).", "warning")
                     return redirect(url_for("abm_reservas"))
 
             # =======================================
@@ -996,7 +1008,150 @@ def abm_reservas_participantes():
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
 
-    return render_template("admin/abm_reservas-participantes.html", usuario=current_user)
+    conn = get_connection("administrativo")
+    cursor = conn.cursor(dictionary=True)
+
+    participantes = []
+    reserva_info = None
+
+    if request.method == "POST":
+        accion = request.form.get("accion")
+        id_reserva = request.form.get("id_reserva")
+
+        # 🔹 Verificar que la reserva exista
+        cursor.execute("""
+            SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha, t.hora_inicio, t.hora_fin, s.capacidad, s.tipo_sala
+            FROM reserva r
+            JOIN turno t ON r.id_turno = t.id_turno
+            JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
+            WHERE r.id_reserva = %s;
+        """, (id_reserva,))
+        reserva_info = cursor.fetchone()
+
+        if not reserva_info:
+            flash("No existe una reserva con ese ID.", "error")
+            return render_template("admin/abm_reservas-participantes.html")
+
+        # 🔹 Eliminar participante
+        if accion == "eliminar":
+            ci = request.form.get("ci_participante")
+            cursor.execute("""
+                DELETE FROM reserva_participante
+                WHERE id_reserva = %s AND ci_participante = %s;
+            """, (id_reserva, ci))
+            conn.commit()
+            flash("Participante eliminado correctamente.", "success")
+
+        # 🔹 Agregar participante (con validaciones)
+        elif accion == "agregar":
+            ci_nuevo = request.form.get("ci_nuevo").strip()
+
+            # Validar formato CI
+            if not ci_nuevo.isdigit() or len(ci_nuevo) not in (7, 8):
+                flash("La CI debe tener solo números (7 u 8 dígitos).", "warning")
+            else:
+                # Verificar existencia
+                cursor.execute("SELECT ci FROM participantes WHERE ci = %s;", (ci_nuevo,))
+                participante = cursor.fetchone()
+
+                if not participante:
+                    flash("No existe ningún participante con esa CI.", "error")
+                else:
+                    # 🔹 Verificar que esté inscripto en un programa académico
+                    cursor.execute("""
+                        SELECT 1
+                        FROM participantes_programa_academico
+                        WHERE ci_participante = %s;
+                    """, (ci_nuevo,))
+                    pertenece_programa = cursor.fetchone()
+
+                    if not pertenece_programa:
+                        flash("El participante no pertenece a ningún programa académico.", "warning")
+                    else:
+                    
+                        try:
+                            # Tipo de persona
+                            cursor.execute("""
+                                SELECT 
+                                    CASE 
+                                        WHEN ppa.rol = 'Docente' THEN 'Docente'
+                                        WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'grado' THEN 'Grado'
+                                        WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'posgrado' THEN 'Posgrado'
+                                        ELSE 'Desconocido'
+                                    END AS tipo_persona
+                                FROM participantes_programa_academico ppa
+                                JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa
+                                WHERE ppa.ci_participante = %s
+                                LIMIT 1;
+                            """, (ci_nuevo,))
+                            tipo_persona = cursor.fetchone()["tipo_persona"]
+
+                            tipo_sala = reserva_info["tipo_sala"]
+
+                            # Restricciones por tipo de sala
+                            if tipo_sala == "Docente" and tipo_persona != "Docente":
+                                flash("Solo docentes pueden estar en esta sala.", "error")
+                            elif tipo_sala == "Posgrado" and tipo_persona != "Posgrado":
+                                flash("Solo estudiantes de posgrado pueden estar en esta sala", "error")
+                            else:
+                                # Sanción activa
+                                cursor.execute("""
+                                    SELECT 1 FROM sancion_participante
+                                    WHERE ci_participante = %s
+                                    AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
+                                """, (ci_nuevo,))
+                                sancionado = cursor.fetchone()
+
+                                if sancionado:
+                                    flash("Este participante tiene una sanción activa.", "error")
+                                else:
+                                    # Capacidad de la sala
+                                    cursor.execute("""
+                                        SELECT COUNT(*) AS ocupados
+                                        FROM reserva_participante
+                                        WHERE id_reserva = %s;
+                                    """, (id_reserva,))
+                                    ocupados = cursor.fetchone()["ocupados"]
+
+                                    if ocupados >= reserva_info["capacidad"]:
+                                        flash("No se puede agregar: sala al límite de capacidad.", "warning")
+                                    else:
+                                        # Verificar si ya está en la reserva
+                                        cursor.execute("""
+                                            SELECT 1 FROM reserva_participante
+                                            WHERE ci_participante = %s AND id_reserva = %s;
+                                        """, (ci_nuevo, id_reserva))
+                                        ya_esta = cursor.fetchone()
+
+                                        if ya_esta:
+                                            flash("Ese participante ya está asociado a esta reserva.", "warning")
+                                        else:
+                                            cursor.execute("""
+                                                INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva, asistencia)
+                                                VALUES (%s, %s, NOW(), TRUE);
+                                            """, (ci_nuevo, id_reserva))
+                                            conn.commit()
+                                            flash("Participante agregado correctamente.", "success")
+
+                        except Exception as e:
+                            flash(f"Error al agregar participante: {e}", "error")
+
+        # 🔹 Obtener lista actualizada de participantes
+        cursor.execute("""
+            SELECT rp.ci_participante, p.nombre, p.apellido
+            FROM reserva_participante rp
+            JOIN participantes p ON p.ci = rp.ci_participante
+            WHERE rp.id_reserva = %s;
+        """, (id_reserva,))
+        participantes = cursor.fetchall()
+
+    conn.close()
+    return render_template(
+        "admin/abm_reservas-participantes.html",
+        reserva=reserva_info,
+        participantes=participantes
+    )
+
 
 
 

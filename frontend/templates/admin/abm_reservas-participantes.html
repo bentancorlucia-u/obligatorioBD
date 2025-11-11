@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administrar participantes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="body-admin">
+  <a href="{{ url_for('abm_reservas') }}" class="btn-volver-inicio">Volver a reservas</a>
+
+  <h2>Administrar participantes de las reservas</h2>
+
+  <!-- Buscar reserva -->
+  <form method="POST" class="form-horizontal">
+    <label for="id_reserva">ID de la reserva:</label>
+    <input type="number" id="id_reserva" name="id_reserva" placeholder="Ej: 10" required>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-agregar">Buscar</button>
+  </form>
+
+  <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container margin-bottom">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+  {% if reserva %}
+    <div class="reserva-detalle">
+    <div class="resumen-reserva">
+        <h3>Reserva #{{ reserva.id_reserva }}</h3>
+        <p><strong>Sala:</strong> {{ reserva.nombre_sala }}</p>
+        <p><strong>Edificio:</strong> {{ reserva.edificio }}</p>
+        <p><strong>Fecha:</strong> {{ reserva.fecha.strftime('%d/%m/%Y') }}</p>
+        <p><strong>Turno:</strong> {{ reserva.hora_inicio }} – {{ reserva.hora_fin }}</p>
+        <p><strong>Capacidad:</strong> {{ participantes|length }}/{{ reserva.capacidad }}</p>
+        <p><strong>Tipo de sala:</strong> {{ reserva.tipo_sala }}</p>
+    </div>
+
+    <div class="form-agregar-participante">
+        <form method="POST" class="form-agregar">
+        <input type="hidden" name="accion" value="agregar">
+        <input type="hidden" name="id_reserva" value="{{ reserva.id_reserva }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label for="ci_nuevo">Agregar participante:</label>
+        <input 
+            type="text" 
+            id="ci_nuevo" 
+            name="ci_nuevo" 
+            placeholder="CI (solo números)" 
+            required 
+            pattern="^[0-9]{7,8}$">
+        <button type="submit" class="btn-agregar">Agregar</button>
+        </form>
+    </div>
+    </div>
+
+    <h2 class="sub">Listado de Participantes</h3>
+
+
+    <!-- Listado de participantes -->
+    <table class="tabla-admin">
+      <thead>
+        <tr>
+          <th>CI</th>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in participantes %}
+        <tr>
+          <td>{{ p.ci_participante }}</td>
+          <td>{{ p.nombre }}</td>
+          <td>{{ p.apellido }}</td>
+          <td>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="accion" value="eliminar">
+              <input type="hidden" name="id_reserva" value="{{ reserva.id_reserva }}">
+              <input type="hidden" name="ci_participante" value="{{ p.ci_participante }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              
+              <button type="submit" class="btn-eliminar">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</body>
+</html>

@@ -1240,6 +1240,154 @@ body.body-admin {
   }
 }
 
+/* ===========================
+   Reservas por participante
+   =========================== */
+/* ===========================
+   BLOQUE DE DETALLE DE RESERVA Y FORMULARIO
+   =========================== */
+.reserva-detalle {
+  width: 90%;
+  max-width: 1500px;
+  margin: 2rem auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.resumen-reserva {
+  background-color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem 3rem;
+  flex: 1 1 45%;
+  font-size: 1rem;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+.resumen-reserva h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #16386d;
+  margin-bottom: 1rem;
+}
+.resumen-reserva p strong {
+  color: #16386d;
+  font-weight: 600;
+}
+
+.form-agregar-participante {
+  height: 100%;
+  flex: 1 1 45%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem 3rem;
+  border: 1.5px solid #00ABE8;
+}
+.form-agregar-participante form.form-agregar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.form-agregar-participante form.form-agregar label {
+  font-weight: 600;
+  color: #16386d;
+  font-size: 1rem;
+}
+.form-agregar-participante form.form-agregar input[type=text] {
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 1rem;
+  width: 160px;
+  text-align: center;
+  transition: all 0.25s ease;
+}
+.form-agregar-participante form.form-agregar input[type=text]:focus {
+  border-color: #16386d;
+  box-shadow: 0 0 6px rgba(22, 56, 109, 0.25);
+  outline: none;
+}
+.form-agregar-participante form.form-agregar input[type=text]::placeholder {
+  color: #999;
+}
+.form-agregar-participante form.form-agregar .btn-agregar {
+  background-color: #16386d;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(22, 56, 109, 0.25);
+}
+.form-agregar-participante form.form-agregar .btn-agregar:hover {
+  background-color: rgb(15.1480916031, 38.558778626, 75.0519083969);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(22, 56, 109, 0.35);
+}
+.form-agregar-participante form.form-agregar .btn-agregar:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(22, 56, 109, 0.3);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .reserva-detalle {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .resumen-reserva, .form-agregar-participante {
+    flex: 1 1 100%;
+  }
+}
+.sub {
+  width: 90%;
+  max-width: 1500px;
+  text-align: left !important;
+}
+
+/* ===========================
+   BOTÓN ELIMINAR PARTICIPANTE
+   =========================== */
+.btn-eliminar {
+  background-color: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+.btn-eliminar:hover {
+  background-color: rgb(158.6655319149, 47.1038297872, 35.5344680851);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+.btn-eliminar:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
 * {
   margin: 0;
   padding: 0;
