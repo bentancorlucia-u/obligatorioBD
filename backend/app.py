@@ -17,6 +17,8 @@ from utilidades import (
 )
 from reportes import reportes_bp
 
+from hash_existing_passwords import hash_existing_passwords
+
 # Cargar las variables del archivo .env
 load_dotenv()
 
@@ -1371,6 +1373,7 @@ def set_security_headers(response):
 # MAIN
 # ==================================================
 if __name__ == "__main__":
+    hash_existing_passwords()
     csrf.init_app(app)
     app.run(debug=True)
 
