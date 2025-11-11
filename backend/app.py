@@ -1153,15 +1153,186 @@ def abm_reservas_participantes():
     )
 
 
+@app.route("/admin/asistencias", methods=["GET", "POST"])
+@login_required
+def asistencias():
+    if current_user.email != "administrativo@ucu.edu.uy":
+        return redirect(url_for("home"))
+
+    conn = get_connection("administrativo")
+    cursor = conn.cursor(dictionary=True)
+
+    participantes = []
+    reserva_info = None
+
+    if request.method == "POST":
+        accion = request.form.get("accion")
+        id_reserva = request.form.get("id_reserva")
+
+        # 🔹 Verificar que la reserva exista
+        cursor.execute("""
+            SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha, 
+                   t.hora_inicio, t.hora_fin, s.capacidad, s.tipo_sala
+            FROM reserva r
+            JOIN turno t ON r.id_turno = t.id_turno
+            JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
+            WHERE r.id_reserva = %s;
+        """, (id_reserva,))
+        reserva_info = cursor.fetchone()
+
+        if not reserva_info:
+            flash("No existe una reserva con ese ID.", "error")
+            return render_template("admin/asistencias.html")
+
+        # 🔹 Guardar asistencias
+        if accion == "guardar":
+            for key, value in request.form.items():
+                if key.startswith("asistencia_"):
+                    ci = key.split("_")[1]
+                    asistencia = 1 if value == "on" else 0
+                    cursor.execute("""
+                        UPDATE reserva_participante
+                        SET asistencia = %s
+                        WHERE id_reserva = %s AND ci_participante = %s;
+                    """, (asistencia, id_reserva, ci))
+            conn.commit()
+            flash("Asistencias actualizadas correctamente.", "success")
+
+        # 🔹 Obtener lista actualizada de participantes con asistencia
+        cursor.execute("""
+            SELECT rp.ci_participante, p.nombre, p.apellido, rp.asistencia
+            FROM reserva_participante rp
+            JOIN participantes p ON p.ci = rp.ci_participante
+            WHERE rp.id_reserva = %s;
+        """, (id_reserva,))
+        participantes = cursor.fetchall()
+
+        if not participantes:
+            flash("No se encontraron participantes para el ID ingresado.", "warning")
+
+    conn.close()
+    return render_template(
+        "admin/asistencias.html",
+        reserva=reserva_info,
+        participantes=participantes
+    )
 
 
-@app.route("/admin/sanciones")
+
+
+@app.route("/admin/sanciones", methods=["GET", "POST"])
 @login_required
 def abm_sanciones():
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
 
-    return render_template("admin/abm_sanciones.html", usuario=current_user)
+    conn = get_connection("administrativo")
+    cursor = conn.cursor(dictionary=True)
+
+    # ===============================
+    # ALTA
+    # ===============================
+    if request.method == "POST" and request.form.get("accion") == "agregar":
+        ci_participante = request.form["ci_participante"].strip()
+        fecha_inicio = request.form["fecha_inicio"]
+        fecha_fin = request.form["fecha_fin"]
+
+        # 1️⃣ Validar formato uruguayo
+        if not validar_cedula_uruguaya(ci_participante):
+            flash("La cédula ingresada no es válida según el formato uruguayo.", "error")
+
+        else:
+            # 2️⃣ Validar existencia en participantes
+            cursor.execute("SELECT * FROM participantes WHERE ci = %s;", (ci_participante,))
+            participante = cursor.fetchone()
+
+            if not participante:
+                flash("No existe un participante con esa cédula.", "error")
+            else:
+                # 3️⃣ Validar vínculo académico
+                cursor.execute("""
+                    SELECT 1 FROM participantes_programa_academico
+                    WHERE ci_participante = %s LIMIT 1;
+                """, (ci_participante,))
+                vinculado = cursor.fetchone()
+
+                if not vinculado:
+                    flash("El participante no está vinculado a ningún programa académico.", "error")
+                else:
+                    try:
+                        cursor.execute("""
+                            INSERT INTO sancion_participante (ci_participante, fecha_inicio, fecha_fin)
+                            VALUES (%s, %s, %s);
+                        """, (ci_participante, fecha_inicio, fecha_fin))
+                        conn.commit()
+                        flash("Sanción agregada correctamente.", "success")
+                    except Exception as e:
+                        conn.rollback()
+                        flash(f"Error al agregar sanción: {e}", "error")
+
+    # ===============================
+    # EDITAR Y ELIMINAR IGUAL QUE ANTES
+    # ===============================
+
+    if request.method == "POST" and request.form.get("accion") == "editar":
+        ci_participante = request.form["ci_participante"]
+        fecha_inicio = request.form["fecha_inicio"]
+        nueva_fecha_fin = request.form["fecha_fin"]
+
+        try:
+            cursor.execute("""
+                UPDATE sancion_participante
+                SET fecha_fin = %s
+                WHERE ci_participante = %s AND fecha_inicio = %s;
+            """, (nueva_fecha_fin, ci_participante, fecha_inicio))
+            conn.commit()
+            flash("Fecha de fin actualizada correctamente.", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al modificar sanción: {e}", "error")
+
+    if request.method == "POST" and request.form.get("accion") == "eliminar":
+        ci_participante = request.form["ci_participante"]
+        fecha_inicio = request.form["fecha_inicio"]
+
+        try:
+            cursor.execute("""
+                DELETE FROM sancion_participante
+                WHERE ci_participante = %s AND fecha_inicio = %s;
+            """, (ci_participante, fecha_inicio))
+            conn.commit()
+            flash("Sanción eliminada correctamente.", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al eliminar sanción: {e}", "error")
+
+    # ===============================
+    # MOSTRAR SOLO ACTIVAS
+    # ===============================
+    cursor.execute("""
+        SELECT 
+            sp.ci_participante,
+            p.nombre,
+            p.apellido,
+            sp.fecha_inicio,
+            sp.fecha_fin
+        FROM sancion_participante sp
+        JOIN participantes p ON p.ci = sp.ci_participante
+        WHERE CURDATE() BETWEEN sp.fecha_inicio AND sp.fecha_fin
+        ORDER BY sp.fecha_inicio DESC;
+    """)
+    sanciones = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("admin/abm_sanciones.html", usuario=current_user, sanciones=sanciones)
+
+
+
+
+
+
 
 
 @app.route("/admin/reportes")

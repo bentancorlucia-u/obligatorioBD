@@ -197,6 +197,53 @@ button[name=login]:hover {
     width: 80%;
   }
 }
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.cards-row {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  background-color: #fff;
+  color: #0a2342;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 2rem 0;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  text-align: center;
+  width: 340px; /* 🔹 mismo ancho para todos */
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 1000px) {
+  .card {
+    width: 300px;
+  }
+}
+@media (max-width: 700px) {
+  .cards-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  .card {
+    width: 90%;
+  }
+}
 body.datos {
   font-family: "Rubik", sans-serif;
   background-color: #f3f6fa;
@@ -886,10 +933,16 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .form-horizontal {
+  background-color: #ffffff;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 1500px;
   width: 90%;
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 2rem !important;
   margin-bottom: 2rem;
 }
 .form-horizontal input, .form-horizontal select {
@@ -1386,6 +1439,153 @@ body.body-admin {
 .btn-eliminar:active {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+body.body-admin {
+  font-family: "Rubik", sans-serif;
+  background-color: #f3f6fa;
+  color: #173363;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+body.body-admin h2 {
+  font-size: 2.3rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+body.body-admin .form-sancion {
+  background-color: #ffffff;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 95%;
+  max-width: 1500px;
+  margin: 0 auto 2rem auto;
+}
+body.body-admin .form-sancion label {
+  font-weight: 700;
+  color: #173363;
+  font-size: 1rem;
+}
+body.body-admin .form-sancion input[type=number],
+body.body-admin .form-sancion input[type=date] {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  color: #173363;
+  width: 170px;
+}
+body.body-admin .form-sancion input[type=number]::placeholder {
+  color: #aaa;
+}
+body.body-admin .form-sancion .btn-agregar {
+  background-color: #173363;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+body.body-admin .form-sancion .btn-agregar:hover {
+  background-color: rgb(13.3852459016, 29.6803278689, 57.6147540984);
+}
+body.body-admin {
+  /* 🔹 Responsive: en pantallas chicas se apilan */
+}
+@media (max-width: 900px) {
+  body.body-admin .form-sancion {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  body.body-admin .form-sancion label {
+    margin-top: 0.5rem;
+  }
+  body.body-admin .form-sancion input,
+  body.body-admin .form-sancion button {
+    width: 100%;
+  }
+}
+body.body-admin table.tabla-admin {
+  width: 90%;
+  max-width: 1200px;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+body.body-admin table.tabla-admin th, body.body-admin table.tabla-admin td {
+  padding: 1rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+body.body-admin table.tabla-admin tr.activa {
+  background-color: #ffe5e5;
+}
+body.body-admin table.tabla-admin tr.expirada {
+  background-color: #f7f7f7;
+}
+body.body-admin table.tabla-admin .btn-eliminar {
+  background-color: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+body.body-admin table.tabla-admin .btn-eliminar:hover {
+  background-color: rgb(158.6655319149, 47.1038297872, 35.5344680851);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+body.body-admin table.tabla-admin .btn-eliminar:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+body.body-admin table.tabla-admin input[type=date] {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.4rem;
+}
+body.body-admin table.tabla-admin .btn-editar, body.body-admin table.tabla-admin .btn-eliminar {
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+body.body-admin table.tabla-admin .btn-editar {
+  background-color: #173363;
+  color: white;
+}
+body.body-admin table.tabla-admin .btn-editar:hover {
+  background-color: rgb(15.3081967213, 33.9442622951, 65.8918032787);
+}
+body.body-admin table.tabla-admin .btn-eliminar {
+  background-color: #e74c3c;
+  color: white;
+  margin-left: 0.5rem;
+}
+body.body-admin table.tabla-admin .btn-eliminar:hover {
+  background-color: rgb(222.7808219178, 45.698630137, 27.4191780822);
 }
 
 * {

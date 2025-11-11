@@ -1,0 +1,166 @@
+body.body-admin {
+  font-family: "Rubik", sans-serif;
+  background-color: $gris-claro;
+  color: $azul-oscuro;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+
+  h2 {
+    font-size: 2.3rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .form-sancion {
+  background-color: $blanco;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 95%;
+  max-width: 1500px;
+  margin: 0 auto 2rem auto;
+
+  label {
+    font-weight: 700;
+    color: $azul-oscuro;
+    font-size: 1rem;
+  }
+
+  input[type="number"],
+  input[type="date"] {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-size: 1rem;
+    color: $azul-oscuro;
+    width: 170px;
+  }
+
+  input[type="number"]::placeholder {
+    color: #aaa;
+  }
+
+  .btn-agregar {
+    background-color: $azul-oscuro;
+    color: $blanco;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+
+    &:hover {
+      background-color: darken($azul-oscuro, 10%);
+    }
+  }
+}
+
+/* 🔹 Responsive: en pantallas chicas se apilan */
+@media (max-width: 900px) {
+  .form-sancion {
+    flex-direction: column;
+    align-items: flex-start;
+
+    label {
+      margin-top: 0.5rem;
+    }
+
+    input,
+    button {
+      width: 100%;
+    }
+  }
+}
+
+
+
+
+
+  table.tabla-admin {
+    width: 90%;
+    max-width: 1200px;
+    border-collapse: collapse;
+    background-color: $blanco;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+    th, td {
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    tr.activa { background-color: #ffe5e5; }
+    tr.expirada { background-color: #f7f7f7; }
+
+    .btn-eliminar {
+        background-color: #c0392b;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.45rem 0.9rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+
+        &:hover {
+            background-color: darken(#c0392b, 8%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        }
+
+    input[type="date"] {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.4rem;
+  }
+
+  .btn-editar, .btn-eliminar {
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+  }
+
+  .btn-editar {
+    background-color: $azul-oscuro;
+    color: white;
+
+    &:hover {
+      background-color: darken($azul-oscuro, 8%);
+    }
+  }
+
+  .btn-eliminar {
+    background-color: #e74c3c;
+    color: white;
+    margin-left: 0.5rem;
+
+    &:hover {
+      background-color: darken(#e74c3c, 8%);
+    }
+  }
+  }
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrar sanciones</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+</head>
+
+<body class="body-admin">
+
+  <!-- Botón volver al inicio -->
+  <a href="{{ url_for('admin') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+  <h2>Administrar sanciones activas</h2>
+
+  <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container margin-bottom">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+  <form method="POST" class="form-sancion">
+  <input type="hidden" name="accion" value="agregar">
+
+  <label for="ci_participante"><strong>CI participante:</strong></label>
+  <input 
+    type="number" 
+    name="ci_participante" 
+    id="ci_participante" 
+    placeholder="Ej: 45678912" 
+    min="1" 
+    step="1" 
+    required>
+
+  <label for="fecha_inicio"><strong>Inicio:</strong></label>
+  <input 
+    type="date" 
+    name="fecha_inicio" 
+    id="fecha_inicio" 
+    required>
+
+  <label for="fecha_fin"><strong>Fin:</strong></label>
+  <input 
+    type="date" 
+    name="fecha_fin" 
+    id="fecha_fin" 
+    required>
+
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="btn-agregar">Agregar sanción</button>
+</form>
+
+  <!-- 🔹 Tabla de sanciones -->
+  <table class="tabla-abm">
+    <thead>
+      <tr>
+        <th>CI</th>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sanciones %}
+      <tr>
+        <form method="POST">
+          <td>{{ s.ci_participante }}</td>
+          <td>{{ s.nombre }}</td>
+          <td>{{ s.apellido }}</td>
+          <td>{{ s.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+          <td>
+            <input type="date" name="fecha_fin" value="{{ s.fecha_fin }}" required>
+          </td>
+          <td>
+            <input type="hidden" name="ci_participante" value="{{ s.ci_participante }}">
+            <input type="hidden" name="fecha_inicio" value="{{ s.fecha_inicio }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <button type="submit" name="accion" value="editar" class="btn-editar">Guardar cambios</button>
+            <button type="submit" name="accion" value="eliminar" class="btn-eliminar">Eliminar</button>
+          </td>
+        </form>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>

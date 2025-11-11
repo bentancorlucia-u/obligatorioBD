@@ -1,30 +1,38 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio - Admin</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio - Admin</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 </head>
+
 <body class="body-home">
 
-    <h1>Hola, {{ current_user.nombre }} {{ current_user.apellido }}</h1>
-    <p class="tipo-usuario">Perfil administrador</p>
-    <div class="cards">
-        <a href="{{ url_for('abm_participantes') }}" class="card">Administrar Participantes</a>
-        <a href="{{ url_for('abm_salas') }}" class="card">Administrar Salas</a>
-        <a href="{{ url_for('abm_reservas') }}" class="card">Administrar Reservas</a>
-        <a href="{{ url_for('abm_sanciones') }}" class="card">Administrar Sanciones</a>
-        <a href="{{ url_for('reportes') }}" class="card">Reportes y Métricas</a>
-    </div>
-    
+  <h1>Hola, {{ current_user.nombre }} {{ current_user.apellido }}</h1>
+  <p class="tipo-usuario">Perfil administrador</p>
 
-    <a href="{{url_for('logout')}}" class="btn-logout">Cerrar Sesión</a>
-    
+  <div class="cards-container">
+    <!-- Fila 1 -->
+    <div class="cards-row">
+      <a href="{{ url_for('abm_participantes') }}" class="card">Administrar Participantes</a>
+      <a href="{{ url_for('abm_salas') }}" class="card">Administrar Salas</a>
+      <a href="{{ url_for('abm_reservas') }}" class="card">Administrar Reservas</a>
+    </div>
+
+    <!-- Fila 2 -->
+    <div class="cards-row">
+      <a href="{{ url_for('abm_sanciones') }}" class="card">Administrar Sanciones</a>
+      <a href="{{ url_for('asistencias') }}" class="card">Administrar Asistencias</a>
+      <a href="{{ url_for('reportes') }}" class="card">Reportes y Métricas</a>
+    </div>
+  </div>
+
+  <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
+
 </body>
 </html>
