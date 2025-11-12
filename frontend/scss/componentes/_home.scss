@@ -39,7 +39,7 @@
 // Card estilo
 .card {
   background-color: $blanco;
-  color: $azul-oscuro;
+  color: $azul-oscuro !important;
   text-decoration: none;
   font-weight: 500;
   padding: 2rem 3rem;
@@ -51,7 +51,7 @@
 
   &:hover {
     background-color: $azul-claro;
-    color: $blanco;
+    color: $blanco !important;
     transform: translateY(-4px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   }

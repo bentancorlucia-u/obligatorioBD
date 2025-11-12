@@ -145,7 +145,7 @@ button[name=login]:hover {
 
 .card {
   background-color: #ffffff;
-  color: #173363;
+  color: #173363 !important;
   text-decoration: none;
   font-weight: 500;
   padding: 2rem 3rem;
@@ -157,7 +157,7 @@ button[name=login]:hover {
 }
 .card:hover {
   background-color: #00ABE8;
-  color: #ffffff;
+  color: #ffffff !important;
   transform: translateY(-4px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
