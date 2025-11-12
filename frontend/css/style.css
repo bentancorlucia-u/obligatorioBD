@@ -755,8 +755,8 @@ input[type=number]::-webkit-outer-spin-button {
   padding: 2rem;
   border-radius: 16px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 1200px;
+  width: 95%;
+  max-width: 1500px;
   margin-bottom: 3rem;
 }
 .formulario-horizontal .form-row {
@@ -812,7 +812,7 @@ input[type=number]::-webkit-outer-spin-button {
 /* === INPUTS DENTRO DE TABLA === */
 .tabla-participantes {
   width: 95%;
-  max-width: 1400px;
+  max-width: 1500px;
   margin: 0 auto;
   border-collapse: collapse;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -914,7 +914,7 @@ input[type=number]::-webkit-outer-spin-button {
   }
 }
 .tabla-abm {
-  width: 90%;
+  width: 95%;
   margin-top: 2rem;
 }
 .tabla-abm th, .tabla-abm td {
@@ -937,9 +937,8 @@ input[type=number]::-webkit-outer-spin-button {
   padding: 1.5rem 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  width: 90%;
+  width: 95%;
   max-width: 1500px;
-  width: 90%;
   display: flex;
   justify-content: space-between;
   gap: 2rem !important;
@@ -968,6 +967,7 @@ input[type=number]::-webkit-outer-spin-button {
 /* ==== TABLA DE ADMINISTRACIÓN ==== */
 .tabla-abm {
   width: 95%;
+  max-width: 1500px;
   margin: 2rem auto;
   border-collapse: collapse;
   background-color: #ffffff;
@@ -1139,7 +1139,8 @@ body.body-admin {
      =========================== */
 }
 body.body-admin table {
-  width: 90%;
+  width: 95%;
+  max-width: 1500px;
   margin: 0 auto;
   border-collapse: collapse;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -1519,8 +1520,8 @@ body.body-admin {
   }
 }
 body.body-admin table.tabla-admin {
-  width: 90%;
-  max-width: 1200px;
+  width: 95%;
+  max-width: 1500px;
   border-collapse: collapse;
   background-color: #ffffff;
   border-radius: 12px;
