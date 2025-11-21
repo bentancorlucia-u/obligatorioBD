@@ -40,3 +40,50 @@ def validar_email_institucional(email: str, rol: str) -> bool:
         return email.endswith("@correo.ucu.edu.uy")
     else:
         return email.endswith("@ucu.edu.uy")
+
+# ==================================================
+# NORMALIZACIÓN DE NOMBRES PROPIOS
+# ==================================================
+def normalizar_nombre(texto):
+    if not texto:
+        return texto
+    
+    texto = texto.strip()
+
+    # Permite espacios y apóstrofes manteniendo formato correcto
+    partes = texto.split()
+
+    partes_normalizadas = []
+    for p in partes:
+        if "'" in p:
+            # Para casos tipo O'Neill, etc.
+            subpartes = p.split("'")
+            subpartes = [sp.capitalize() for sp in subpartes]
+            p_norm = "'".join(subpartes)
+        else:
+            p_norm = p.capitalize()
+
+        partes_normalizadas.append(p_norm)
+
+    return " ".join(partes_normalizadas)
+
+# ==================================================
+# NORMALIZACIÓN DE NOMBRES DE SALAS
+# ==================================================
+
+def normalizar_sala(nombre):
+    # Normaliza el nombre: primera letra de cada palabra en mayúscula
+    # Respeta apóstrofes para nombres
+    palabras = nombre.strip().split()
+
+    normalizadas = []
+    for p in palabras:
+        if "'" in p:  
+            # Casos tipo D'Elía
+            partes = p.split("'")
+            partes = [parte.capitalize() for parte in partes]
+            normalizadas.append("'".join(partes))
+        else:
+            normalizadas.append(p.capitalize())
+
+    return " ".join(normalizadas)

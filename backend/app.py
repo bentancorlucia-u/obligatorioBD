@@ -7,13 +7,17 @@ from models.entities.user import User
 from models.entities.reserva import Reserva
 from models.modelReserva import modelReserva
 import os
+import re
 from dotenv import load_dotenv
 from datetime import datetime, date, time, timedelta
 from werkzeug.security import generate_password_hash
+
 from utilidades import (
     generar_contrasena,
     validar_cedula_uruguaya,
-    validar_email_institucional
+    validar_email_institucional,
+    normalizar_nombre,
+    normalizar_sala
 )
 from reportes import reportes_bp
 
@@ -450,7 +454,7 @@ def admin():
 @app.route("/admin/participantes", methods=["GET", "POST"])
 @login_required
 def abm_participantes():
-    # 🔒 Solo el admin puede acceder
+    # Solo el admin puede acceder
     if current_user.email != "administrativo@ucu.edu.uy":
         return redirect(url_for("home"))
 
@@ -494,7 +498,36 @@ def abm_participantes():
             programa = request.form.get("programa")
             rol = request.form.get("rol")
 
+            # VALIDAR NOMBRE Y APELLIDO (caracteres permitidos)
+            NOMBRE_REGEX = r"^[A-Za-zÀ-ÿ' ]+$"
+
+            if not re.match(NOMBRE_REGEX, nombre):
+                flash("El nombre contiene caracteres inválidos. Solo se permiten letras, espacios y apóstrofes.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            if not re.match(NOMBRE_REGEX, apellido):
+                flash("El apellido contiene caracteres inválidos. Solo se permiten letras, espacios y apóstrofes.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            # NORMALIZAR NOMBRE Y APELLIDO
+            nombre = normalizar_nombre(nombre)
+            apellido = normalizar_nombre(apellido)
+
             # Validaciones
+
+            MAX_LEN = 50  # límite en la definición de la tabla en la bd
+
+            # validar cantidad de caracteres
+            if len(nombre) > MAX_LEN:
+                flash(f"El nombre no puede superar {MAX_LEN} caracteres.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            if len(apellido) > MAX_LEN:
+                flash(f"El apellido no puede superar {MAX_LEN} caracteres.", "error")
+                return redirect(url_for("abm_participantes"))
+            
+            # validar cédula y email
+            
             if not validar_cedula_uruguaya(ci):
                 flash("Cédula inválida. Debe ser una cédula uruguaya válida.", "error")
                 return redirect(url_for("abm_participantes"))
@@ -552,31 +585,84 @@ def abm_participantes():
             nombre = request.form.get("nombre")
             apellido = request.form.get("apellido")
             email = request.form.get("email")
+            programa = request.form.get("programa")
+            rol = request.form.get("rol")
 
-            # Evitar modificar al admin
+            # VALIDAR NOMBRE Y APELLIDO (caracteres permitidos)
+            NOMBRE_REGEX = r"^[A-Za-zÀ-ÿ' ]+$"
+
+            if not re.match(NOMBRE_REGEX, nombre):
+                flash("El nombre contiene caracteres inválidos. Solo se permiten letras, espacios y apóstrofes.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            if not re.match(NOMBRE_REGEX, apellido):
+                flash("El apellido contiene caracteres inválidos. Solo se permiten letras, espacios y apóstrofes.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            # NORMALIZAR NOMBRE Y APELLIDO
+            nombre = normalizar_nombre(nombre)
+            apellido = normalizar_nombre(apellido)
+
+            # Validaciones
+
+            MAX_LEN = 50  # límite en la definición de la tabla en la bd
+
+            # validar cantidad de caracteres
+            if len(nombre) > MAX_LEN:
+                flash(f"El nombre no puede superar {MAX_LEN} caracteres.", "error")
+                return redirect(url_for("abm_participantes"))
+
+            if len(apellido) > MAX_LEN:
+                flash(f"El apellido no puede superar {MAX_LEN} caracteres.", "error")
+                return redirect(url_for("abm_participantes"))
+            
+            # validar email
+
+
+            if not validar_email_institucional(email, rol):
+                dominio = "@correo.ucu.edu.uy" if rol.lower() == "estudiante" else "@ucu.edu.uy"
+                flash(f"No se pudo modificar el participante. Email institucional inválido. Debe terminar en {dominio}", "error")
+                return redirect(url_for("abm_participantes"))
+
+
+
+            # No permitir tocar al admin
             if email == "administrativo@ucu.edu.uy":
                 flash("No se puede modificar al usuario administrativo.", "warning")
                 return redirect(url_for("abm_participantes"))
 
             try:
+                # Update de datos básicos
                 cursor.execute("""
                     UPDATE participantes
                     SET nombre = %s, apellido = %s, email = %s
                     WHERE ci = %s
                 """, (nombre, apellido, email, ci))
+
+                # Update de programa + rol
+                cursor.execute("""
+                    UPDATE participantes_programa_academico
+                    SET nombre_programa = %s,
+                        rol = %s
+                    WHERE ci_participante = %s
+                """, (programa, rol, ci))
+
                 conn.commit()
                 flash(f"{nombre} {apellido} actualizado correctamente.", "success")
+
             except Exception as e:
                 conn.rollback()
                 flash(f"Error al editar participante: {e}", "error")
 
             return redirect(url_for("abm_participantes"))
 
+
         # ============================================
         # ELIMINAR PARTICIPANTE
         # ============================================
         elif accion == "eliminar":
             ci = request.form.get("ci")
+
             cursor.execute("SELECT email FROM participantes WHERE ci = %s", (ci,))
             participante = cursor.fetchone()
 
@@ -584,33 +670,65 @@ def abm_participantes():
                 flash("Participante no encontrado.", "error")
                 return redirect(url_for("abm_participantes"))
 
-            email = participante["email"]
-
-            # Evitar eliminar al admin
-            if email == "administrativo@ucu.edu.uy":
+            if participante["email"] == "administrativo@ucu.edu.uy":
                 flash("No se puede eliminar al usuario administrativo.", "warning")
                 return redirect(url_for("abm_participantes"))
 
             try:
-                cursor.execute("DELETE FROM participantes WHERE ci = %s", (ci,))
+                # Anular sanciones activas
+                cursor.execute("""
+                    UPDATE sancion_participante
+                    SET activa = FALSE
+                    WHERE ci_participante = %s
+                    AND activa = TRUE;
+                """, (ci,))
+
+                # Anular asistencia y confirmación en reservas
+                cursor.execute("""
+                    UPDATE reserva_participante
+                    SET asistencia = FALSE,
+                        confirmado = FALSE
+                    WHERE ci_participante = %s;
+                """, (ci,))
+
+                # Eliminar participante
+                # se eliminan en cascada en los participantes_programa_academico y el login
+                cursor.execute("""
+                    DELETE FROM participantes
+                    WHERE ci = %s;
+                """, (ci,))
+
                 conn.commit()
-                flash("Participante eliminado correctamente.", "success")
+                flash("Participante eliminado, sanciones desactivadas y asistencia anulada.", "success")
+
             except Exception as e:
                 conn.rollback()
                 flash(f"Error al eliminar participante: {e}", "error")
 
             return redirect(url_for("abm_participantes"))
 
+
     # ============================================
     # Mostrar participantes actuales
     # ============================================
+    # orden alfabetico, pero el admin primero
     cursor.execute("""
-        SELECT ci, nombre, apellido, email
-        FROM participantes
-        ORDER BY 
-            CASE WHEN email = 'administrativo@ucu.edu.uy' THEN 0 ELSE 1 END,
-            apellido, nombre;
+        SELECT p.ci, p.nombre, p.apellido, p.email,
+            pa.nombre_programa,
+            pa.id_facultad,
+            f.nombre AS facultad,
+            ppa.rol
+        FROM participantes p
+        LEFT JOIN participantes_programa_academico ppa ON p.ci = ppa.ci_participante
+        LEFT JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa
+        LEFT JOIN facultad f ON pa.id_facultad = f.id_facultad
+        ORDER BY
+            CASE WHEN p.email = 'administrativo@ucu.edu.uy' THEN 0 ELSE 1 END,
+            p.apellido ASC,
+            p.nombre ASC;
+
     """)
+
     participantes = cursor.fetchall()
 
     return render_template(
@@ -644,13 +762,35 @@ def abm_salas():
         edificio = request.form["edificio"]
         tipo_sala = request.form["tipo_sala"]
 
-        # Validar capacidad (entero positivo)
+        try:
+            # Longitud máxima
+            if len(nombre_sala) == 0 or len(nombre_sala) > 50:
+                raise ValueError("longitud")
+
+            # Solo caracteres permitidos:
+            # letras, números, espacios, comillas dobles, apóstrofe
+            patron = r"^[A-Za-z0-9\s\"']+$"
+            if not re.match(patron, nombre_sala):
+                raise ValueError("caracteres")
+
+            # Normalización automática
+            nombre_sala = normalizar_sala(nombre_sala)
+
+        except ValueError as e:
+            if str(e) == "longitud":
+                flash("El nombre de la sala debe tener entre 1 y 50 caracteres.", "error")
+            else:
+                flash("El nombre de la sala contiene caracteres inválidos.", "error")
+
+            return redirect(url_for("abm_salas"))
+
+        # Validar capacidad (entero positivo y <= 60)
         try:
             capacidad = int(request.form["capacidad"])
-            if capacidad <= 0:
+            if capacidad <= 0 or capacidad > 60:
                 raise ValueError
         except ValueError:
-            flash("La capacidad debe ser un número entero positivo.", "error")
+            flash("La capacidad debe ser un número entero entre 1 y 60.", "error")
             return redirect(url_for("abm_salas"))
 
         # Verificar si ya existe una sala con ese nombre y edificio
@@ -698,13 +838,13 @@ def abm_salas():
         edificio = request.form["edificio"]
         nuevo_tipo = request.form["tipo_sala"]
 
-        # Validar capacidad
+        # Validar capacidad (entero positivo y <= 60)
         try:
-            nueva_capacidad = int(request.form["capacidad"])
-            if nueva_capacidad <= 0:
-                raise ValueError("Capacidad debe ser un número entero positivo.")
+            capacidad = int(request.form["capacidad"])
+            if capacidad <= 0 or capacidad > 60:
+                raise ValueError
         except ValueError:
-            flash("La capacidad debe ser un número entero positivo.", "error")
+            flash("La capacidad debe ser un número entero entre 1 y 60.", "error")
             return redirect(url_for("abm_salas"))
 
         try:
@@ -867,7 +1007,8 @@ def abm_reservas():
                 SELECT 1
                 FROM sancion_participante
                 WHERE ci_participante = %s
-                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
+                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin
+                AND activa = 1;
             """, (ci_participante,))
             sancionado = cursor.fetchone()
 
@@ -948,33 +1089,6 @@ def abm_reservas():
         except Exception as e:
             conn.rollback()
             flash(f"Error al crear la reserva: {e}", "error")
-
-
-    # =========================================
-    # BAJA DE RESERVA
-    # =========================================
-    if request.method == "POST" and request.form.get("accion") == "eliminar":
-        id_reserva = request.form["id_reserva"]
-        try:
-            # Cambiar estado a Cancelada
-            cursor.execute("""
-                UPDATE reserva
-                SET estado = 'Cancelada'
-                WHERE id_reserva = %s;
-            """, (id_reserva,))
-
-            # Eliminar los participantes asociados
-            cursor.execute("""
-                DELETE FROM reserva_participante
-                WHERE id_reserva = %s;
-            """, (id_reserva,))
-
-            conn.commit()
-            flash("Reserva cancelada y participantes eliminados correctamente.", "success")
-
-        except Exception as e:
-            conn.rollback()
-            flash(f"Error al cancelar la reserva: {e}", "error")
 
     # =========================================
     # MODIFICAR RESERVA
