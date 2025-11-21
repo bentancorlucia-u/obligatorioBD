@@ -30,11 +30,13 @@
     <table class="tabla-reservas">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>Edificio</th>
                 <th>Sala</th>
                 <th>Fecha</th>
                 <th>Horario</th>
                 <th>Participantes</th>
+                <th>Capacidad</th>
                 <th>Estado</th>
                 <th></th>
             </tr>
@@ -42,6 +44,7 @@
         <tbody>
             {% for r in reservas %}
             <tr>
+                <td>{{ r.id_reserva }}</td>
                 <td>{{ r.edificio }}</td>
                 <td>{{ r.nombre_sala }}</td>
 
@@ -72,6 +75,10 @@
                     {% endif %}
                 </td>
 
+                <!-- Capacidad -->
+                <td>{{ r.confirmados }}/{{ r.capacidad }}</td>
+
+
                 <!-- Estado -->
                 <td>
                     {% if r.estado.lower() == "activa" %}
@@ -93,7 +100,7 @@
                             action="{{ url_for('cancelar_participacion', id_reserva=r.id_reserva) }}"
                             onsubmit="return confirm('{{ mensaje }}');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn-cancelar" title="Cancelar participación">Cancelar participación</button>
+                            <button type="submit" class="btn-cancelar" title="Cancelar participación">Cancelar</button>
                         </form>
                     {% else %}
                         -

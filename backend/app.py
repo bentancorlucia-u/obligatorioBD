@@ -8,7 +8,7 @@ from models.entities.reserva import Reserva
 from models.modelReserva import modelReserva
 import os
 from dotenv import load_dotenv
-from datetime import date
+from datetime import datetime, date, time, timedelta
 from werkzeug.security import generate_password_hash
 from utilidades import (
     generar_contrasena,
@@ -27,8 +27,11 @@ load_dotenv()
 # CONFIGURACIÓN BASE
 # ==================================================
 app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend")
-csrf = CSRFProtect(app)  # Protección CSRF para formularios
 app.secret_key = os.getenv("DB_SECRET_KEY")  # Necesario para sesiones y flash()
+
+# CSRF (solo una vez)
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 
 # Inicializar Flask-Login
@@ -266,7 +269,7 @@ def sanciones():
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT fecha_inicio, fecha_fin
+        SELECT fecha_inicio, fecha_fin, activa
         FROM sancion_participante
         WHERE ci_participante = %s
         ORDER BY fecha_inicio DESC;
@@ -278,11 +281,18 @@ def sanciones():
 
     for s in sanciones:
         dias_restantes = (s["fecha_fin"] - hoy).days
-        s["dias_restantes"] = max(dias_restantes, 0)
-        s["estado"] = "Activa" if dias_restantes >= 0 else "Expirada"
+
+        # Si está activa y faltan días → mostrar días
+        if s["activa"] == 1 and dias_restantes >= 0:
+            s["estado"] = "Activa"
+            s["dias_restantes"] = dias_restantes
+        else:
+            s["estado"] = "Expirada"
+            s["dias_restantes"] = "-"
+
         sanciones_ordenadas.append(s)
 
-    # Orden: primero activas, luego expiradas
+    # Orden: primero activas
     sanciones_ordenadas.sort(key=lambda x: x["estado"] != "Activa")
 
     return render_template(
@@ -303,7 +313,7 @@ def unirme():
         # Verificar que la reserva exista y esté activa
         cursor.execute("""
             SELECT r.id_reserva, r.fecha, r.id_turno, s.capacidad, s.tipo_sala,
-                   (SELECT COUNT(*) FROM reserva_participante rp WHERE rp.id_reserva = r.id_reserva) AS ocupados
+                   (SELECT COUNT(*) FROM reserva_participante rp WHERE rp.id_reserva = r.id_reserva AND rp.confirmado = TRUE) AS ocupados
             FROM reserva r
             JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
             WHERE r.id_reserva = %s AND r.estado = 'Activa';
@@ -319,7 +329,8 @@ def unirme():
                 SELECT DATE_FORMAT(fecha_fin, '%d/%m/%Y') AS fin
                 FROM sancion_participante
                 WHERE ci_participante = %s
-                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
+                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin
+                AND activa = 1;
             """, (current_user.ci,))
             sancion = cursor.fetchone()
 
@@ -342,62 +353,84 @@ def unirme():
                 cursor.close(); conn.close()
                 return render_template("unirme.html", usuario=current_user)
 
-            # Verificar si ya está en la reserva
+            # Verificar si ya existe una fila en reserva_participante
             cursor.execute("""
-                SELECT 1 FROM reserva_participante
+                SELECT confirmado
+                FROM reserva_participante
                 WHERE ci_participante = %s AND id_reserva = %s;
             """, (current_user.ci, id_reserva))
-            if cursor.fetchone():
+
+            row = cursor.fetchone()
+
+            # Caso 1: ya está confirmado → bloquear
+            if row and row["confirmado"] == 1:
                 flash("Ya sos participante de esta reserva.", "warning")
+                cursor.close(); conn.close()
+                return render_template("unirme.html", usuario=current_user)
 
-            # Verificar capacidad
-            elif reserva["ocupados"] >= reserva["capacidad"]:
+            # Verificar capacidad antes de continuar
+            if reserva["ocupados"] >= reserva["capacidad"]:
                 flash("La sala ya alcanzó su capacidad máxima.", "error")
+                cursor.close(); conn.close()
+                return render_template("unirme.html", usuario=current_user)
 
-            else:
-                # Restricciones de grado: límite diario y semanal
-                if "grado" in tipo_usuario:
-                    # Límite diario: 2 horas por día
-                    cursor.execute("""
-                        SELECT COUNT(*) AS bloques
-                        FROM reserva_participante rp
-                        JOIN reserva r ON rp.id_reserva = r.id_reserva
-                        WHERE rp.ci_participante = %s AND r.fecha = %s AND r.estado = 'Activa';
-                    """, (current_user.ci, reserva["fecha"]))
-                    if cursor.fetchone()["bloques"] >= 2:
-                        flash("No podés tener más de 2 horas de reserva por día.", "error")
-                        cursor.close(); conn.close()
-                        return render_template("unirme.html", usuario=current_user)
-
-                    # Límite semanal: 3 reservas activas
-                    hoy = date.today()
-                    inicio_semana = hoy - timedelta(days=hoy.weekday())  # lunes
-                    fin_semana = inicio_semana + timedelta(days=6)       # domingo
-
-                    cursor.execute("""
-                        SELECT COUNT(*) AS cantidad
-                        FROM reserva_participante rp
-                        JOIN reserva r ON rp.id_reserva = r.id_reserva
-                        WHERE rp.ci_participante = %s
-                          AND r.fecha BETWEEN %s AND %s
-                          AND r.estado = 'Activa';
-                    """, (current_user.ci, inicio_semana, fin_semana))
-                    if cursor.fetchone()["cantidad"] >= 3:
-                        flash("No podés tener más de 3 reservas activas esta semana.", "error")
-                        cursor.close(); conn.close()
-                        return render_template("unirme.html", usuario=current_user)
-
-                # Si pasa todas las validaciones, se une
+            # Restricciones de grado: límite diario y semanal
+            if "grado" in tipo_usuario:
+                # Límite diario: 2 horas por día
                 cursor.execute("""
-                    INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva)
-                    VALUES (%s, %s, CURDATE());
+                    SELECT COUNT(*) AS bloques
+                    FROM reserva_participante rp
+                    JOIN reserva r ON rp.id_reserva = r.id_reserva
+                    WHERE rp.ci_participante = %s AND r.fecha = %s AND r.estado = 'Activa' AND rp.confirmado = TRUE;
+                """, (current_user.ci, reserva["fecha"]))
+                if cursor.fetchone()["bloques"] >= 2:
+                    flash("No podés tener más de 2 horas de reserva por día.", "error")
+                    cursor.close(); conn.close()
+                    return render_template("unirme.html", usuario=current_user)
+
+                # Límite semanal: 3 reservas activas
+                hoy = date.today()
+                inicio_semana = hoy - timedelta(days=hoy.weekday())
+                fin_semana = inicio_semana + timedelta(days=6)
+
+                cursor.execute("""
+                    SELECT COUNT(*) AS cantidad
+                    FROM reserva_participante rp
+                    JOIN reserva r ON rp.id_reserva = r.id_reserva
+                    WHERE rp.ci_participante = %s
+                      AND r.fecha BETWEEN %s AND %s
+                      AND r.estado = 'Activa'
+                      AND rp.confirmado = TRUE;
+                """, (current_user.ci, inicio_semana, fin_semana))
+                if cursor.fetchone()["cantidad"] >= 3:
+                    flash("No podés tener más de 3 reservas activas esta semana.", "error")
+                    cursor.close(); conn.close()
+                    return render_template("unirme.html", usuario=current_user)
+
+            # Caso 2: la fila existe pero estaba desconfirmado → reactivar
+            if row and row["confirmado"] == 0:
+                cursor.execute("""
+                    UPDATE reserva_participante
+                    SET confirmado = TRUE
+                    WHERE ci_participante = %s AND id_reserva = %s;
                 """, (current_user.ci, id_reserva))
                 conn.commit()
-                flash("Te uniste correctamente a la sala.", "success")
+                flash("Te uniste nuevamente a la sala.", "success")
+                cursor.close(); conn.close()
+                return render_template("unirme.html", usuario=current_user)
+
+            # Caso 3: no existía → insertar nuevo registro
+            cursor.execute("""
+                INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva, confirmado)
+                VALUES (%s, %s, CURDATE(), TRUE);
+            """, (current_user.ci, id_reserva))
+            conn.commit()
+            flash("Te uniste correctamente a la sala.", "success")
 
     cursor.close()
     conn.close()
     return render_template("unirme.html", usuario=current_user)
+
 
 
 # ==================================================
@@ -727,6 +760,37 @@ def abm_reservas():
         ci_participante = request.form["ci_participante"].strip()
 
         try:
+
+            # =======================================
+            # Verificar que la fecha no haya pasado
+            # =======================================
+            hoy = date.today()
+            fecha_reserva = datetime.strptime(fecha, "%Y-%m-%d").date()
+
+            if fecha_reserva < hoy:
+                flash("No se puede crear una reserva en una fecha pasada.", "warning")
+                return redirect(url_for("abm_reservas"))
+
+            # =======================================
+            # Verificar que el turno no haya pasado (si es hoy)
+            # =======================================
+            if fecha_reserva == hoy:
+                cursor.execute("""
+                    SELECT TIME_FORMAT(hora_inicio, '%H:%i') AS inicio
+                    FROM turno
+                    WHERE id_turno = %s;
+                """, (id_turno,))
+                
+                turno = cursor.fetchone()
+
+                if turno:
+                    hora_turno = datetime.strptime(turno["inicio"], "%H:%M").time()
+                    hora_actual = datetime.now().time()
+
+                    if hora_turno <= hora_actual:
+                        flash("No se puede reservar un turno que ya comenzó o ya pasó.", "warning")
+                        return redirect(url_for("abm_reservas"))
+                    
             # =======================================
             # Validar formato de CI (solo números, 7–8 dígitos)
             # =======================================
@@ -1277,40 +1341,28 @@ def abm_sanciones():
                         flash(f"Error al agregar sanción: {e}", "error")
 
     # ===============================
-    # EDITAR Y ELIMINAR IGUAL QUE ANTES
+    # EDITAR SANCIÓN
     # ===============================
 
     if request.method == "POST" and request.form.get("accion") == "editar":
         ci_participante = request.form["ci_participante"]
         fecha_inicio = request.form["fecha_inicio"]
         nueva_fecha_fin = request.form["fecha_fin"]
+        nueva_activa = request.form["activa"]  # <-- NUEVO
 
         try:
             cursor.execute("""
                 UPDATE sancion_participante
-                SET fecha_fin = %s
+                SET fecha_fin = %s,
+                    activa = %s
                 WHERE ci_participante = %s AND fecha_inicio = %s;
-            """, (nueva_fecha_fin, ci_participante, fecha_inicio))
+            """, (nueva_fecha_fin, nueva_activa, ci_participante, fecha_inicio))
+            
             conn.commit()
-            flash("Fecha de fin actualizada correctamente.", "success")
+            flash("Sanción actualizada correctamente.", "success")
         except Exception as e:
             conn.rollback()
             flash(f"Error al modificar sanción: {e}", "error")
-
-    if request.method == "POST" and request.form.get("accion") == "eliminar":
-        ci_participante = request.form["ci_participante"]
-        fecha_inicio = request.form["fecha_inicio"]
-
-        try:
-            cursor.execute("""
-                DELETE FROM sancion_participante
-                WHERE ci_participante = %s AND fecha_inicio = %s;
-            """, (ci_participante, fecha_inicio))
-            conn.commit()
-            flash("Sanción eliminada correctamente.", "success")
-        except Exception as e:
-            conn.rollback()
-            flash(f"Error al eliminar sanción: {e}", "error")
 
     # ===============================
     # MOSTRAR SOLO ACTIVAS
@@ -1321,10 +1373,15 @@ def abm_sanciones():
             p.nombre,
             p.apellido,
             sp.fecha_inicio,
-            sp.fecha_fin
+            sp.fecha_fin,
+            sp.activa,
+            CASE
+                WHEN CURDATE() BETWEEN sp.fecha_inicio AND sp.fecha_fin
+                    THEN 'Activa'
+                ELSE 'Expirada'
+            END AS estado
         FROM sancion_participante sp
         JOIN participantes p ON p.ci = sp.ci_participante
-        WHERE CURDATE() BETWEEN sp.fecha_inicio AND sp.fecha_fin
         ORDER BY sp.fecha_inicio DESC;
     """)
     sanciones = cursor.fetchall()
@@ -1374,6 +1431,5 @@ def set_security_headers(response):
 # ==================================================
 if __name__ == "__main__":
     hash_existing_passwords()
-    csrf.init_app(app)
     app.run(debug=True)
 

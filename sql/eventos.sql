@@ -44,4 +44,11 @@ END//
 
 DELIMITER ;
 
+CREATE EVENT actualizar_sanciones_expiradas
+ON SCHEDULE EVERY 1 DAY
+DO
+    UPDATE sancion_participante
+    SET activa = FALSE
+    WHERE fecha_fin < CURDATE();
+
 SET GLOBAL event_scheduler = ON;

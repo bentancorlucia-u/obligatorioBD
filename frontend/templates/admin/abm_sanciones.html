@@ -69,32 +69,53 @@
         <th>Apellido</th>
         <th>Inicio</th>
         <th>Fin</th>
-        <th>Acciones</th>
+        <th>Estado</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for s in sanciones %}
-      <tr>
+      <tr class="{% if s.activa == 1 %}activa{% else %}expirada{% endif %}">
         <form method="POST">
+          
           <td>{{ s.ci_participante }}</td>
           <td>{{ s.nombre }}</td>
           <td>{{ s.apellido }}</td>
           <td>{{ s.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+
+          <!-- Fecha fin editable -->
           <td>
-            <input type="date" name="fecha_fin" value="{{ s.fecha_fin }}" required>
+            <input 
+              type="date" 
+              name="fecha_fin" 
+              value="{{ s.fecha_fin }}" 
+              required>
           </td>
+
+          <!-- Estado editable -->
+          <td>
+            <select name="activa" class="select-estado">
+              <option value="1" {% if s.activa == 1 %}selected{% endif %}>Activa</option>
+              <option value="0" {% if s.activa == 0 %}selected{% endif %}>Expirada</option>
+            </select>
+          </td>
+
+          <!-- Acciones -->
           <td>
             <input type="hidden" name="ci_participante" value="{{ s.ci_participante }}">
             <input type="hidden" name="fecha_inicio" value="{{ s.fecha_inicio }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <button type="submit" name="accion" value="editar" class="btn-editar">Guardar cambios</button>
-            <button type="submit" name="accion" value="eliminar" class="btn-eliminar">Eliminar</button>
+            
+            <button type="submit" name="accion" value="editar" class="btn-editar">
+              Guardar cambios
+            </button>
           </td>
+
         </form>
       </tr>
       {% endfor %}
     </tbody>
+
   </table>
 
 </body>

@@ -14,7 +14,8 @@ class modelReserva:
                 SELECT DATE_FORMAT(fecha_fin, '%d/%m/%Y') AS fin
                 FROM sancion_participante
                 WHERE ci_participante = %s
-                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
+                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin
+                AND activa = 1;
             """, (current_user.ci,))
             sancion = cursor.fetchone()
 
@@ -169,26 +170,38 @@ class modelReserva:
         try:
             cursor = db.cursor(dictionary=True)
             query = """
-                SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha,
-                    t.hora_inicio, t.hora_fin, r.estado,
+                SELECT 
+                    r.id_reserva,
+                    r.nombre_sala,
+                    r.edificio,
+                    r.fecha,
+                    t.hora_inicio,
+                    t.hora_fin,
+                    r.estado,
                     s.capacidad,
+
+                    -- participantes confirmados
                     (
                         SELECT COUNT(*) 
                         FROM reserva_participante rp2 
-                        WHERE rp2.id_reserva = r.id_reserva 
-                            AND rp2.confirmado = TRUE
-                    ) AS participantes_confirmados
+                        WHERE rp2.id_reserva = r.id_reserva
+                        AND rp2.confirmado = TRUE
+                    ) AS confirmados
+
                 FROM reserva r
-                INNER JOIN reserva_participante rp 
-                    ON r.id_reserva = rp.id_reserva
-                INNER JOIN turno t 
-                    ON r.id_turno = t.id_turno
-                INNER JOIN sala s 
-                    ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
-                WHERE rp.ci_participante = %s
-                AND rp.confirmado = TRUE        -- Solo reservas donde el usuario confirmó asistencia
-                AND r.estado = 'Activa'         -- Solo reservas activas
+                JOIN turno t ON t.id_turno = r.id_turno
+                JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
+
+                WHERE r.id_reserva IN (
+                    SELECT rp.id_reserva
+                    FROM reserva_participante rp
+                    WHERE rp.ci_participante = %s
+                    AND rp.confirmado = TRUE        -- Solo reservas donde el usuario confirmó asistencia
+                )
+                AND r.estado = 'Activa'               -- Solo reservas activas
+
                 ORDER BY r.fecha DESC;
+
             """
             cursor.execute(query, (ci,))
             reservas = cursor.fetchall()
