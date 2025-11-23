@@ -1,50 +1,34 @@
 USE ucu_reservas;
 
--- ---------------- PARTICIPANTES ----------------
+-- ==========================================================
+-- PARTICIPANTES (CIs verificadas, correos institucionales)
+-- ==========================================================
 INSERT INTO participantes(ci, nombre, apellido, email) VALUES
-('12345678','Ana','Pérez','ana.perez@correo.ucu.edu.uy'),
-('23456789','Luis','González','luis.gonzalez@correo.ucu.edu.uy'),
-('34567890','María','Rodríguez','maria.rodriguez@correo.ucu.edu.uy'),
-('45678901','Juan','López','juan.lopez@correo.ucu.edu.uy'),
-('56789012','Sofía','Martínez','sofia.martinez@correo.ucu.edu.uy'),
-('67890123','Carlos','Fernández','carlos.fernandez@correo.ucu.edu.uy'),
-('78901234','Laura','Gómez','laura.gomez@correo.ucu.edu.uy'),
-('89012345','Diego','Díaz','diego.diaz@correo.ucu.edu.uy'),
-('90123456','Valentina','Santos','valentina.santos@correo.ucu.edu.uy'),
-('11223344','Pablo','Vega','pablo.vega@correo.ucu.edu.uy'),
-('22334455','Lucía','Ramos','lucia.ramos@correo.ucu.edu.uy'),
-('33445566','Mateo','Castro','mateo.castro@correo.ucu.edu.uy'),
-('44556677','Isabella','Pinto','isabella.pinto@correo.ucu.edu.uy'),
-('55667788','Tomás','Herrera','tomas.herrera@correo.ucu.edu.uy'),
-('66778899','Juliana','Silva','juliana.silva@correo.ucu.edu.uy'),
-('77889900','Sebastián','Morales','sebastian.morales@correo.ucu.edu.uy'),
-('88990011','Martina','Rojas','martina.rojas@correo.ucu.edu.uy'),
-('99001122','Federico','Alonso','federico.alonso@correo.ucu.edu.uy'),
-('10111213','Camila','Navarro','camila.navarro@correo.ucu.edu.uy');
+('48562347','Ana','Pérez','ana.perez@correo.ucu.edu.uy'),
+('51238903','Luis','González','luis.gonzalez@correo.ucu.edu.uy'),
+('43782512','María','Rodríguez','maria.rodriguez@correo.ucu.edu.uy'),
+('40672157','Tomás','Silva','tomas.silva@correo.ucu.edu.uy'),
+('53910675','Camila','Duarte','camila.duarte@correo.ucu.edu.uy'),
 
--- ---------------- LOGIN ----------------
+('29875645','José','Rodríguez','jrodriguez@ucu.edu.uy'), /* docente */
+('10000014','Admin','UCU','administrativo@ucu.edu.uy');   /* admin */
+
+-- ==========================================================
+-- LOGIN
+-- ==========================================================
 INSERT INTO login(email, password) VALUES
 ('ana.perez@correo.ucu.edu.uy','AnaP1234-'),
 ('luis.gonzalez@correo.ucu.edu.uy','LuisG5678*'),
-('maria.rodriguez@correo.ucu.edu.uy','MariaR9012!'),
-('juan.lopez@correo.ucu.edu.uy','JuanL3456$'),
-('sofia.martinez@correo.ucu.edu.uy','SofiaM7890%'),
-('carlos.fernandez@correo.ucu.edu.uy','CarlosF2345#'),
-('laura.gomez@correo.ucu.edu.uy','LauraG6789@'),
-('diego.diaz@correo.ucu.edu.uy','DiegoD0123^'),
-('valentina.santos@correo.ucu.edu.uy','ValenS4567&'),
-('pablo.vega@correo.ucu.edu.uy','PabloV8901*'),
-('lucia.ramos@correo.ucu.edu.uy','LuciaR2345!'),
-('mateo.castro@correo.ucu.edu.uy','MateoC6789-'),
-('isabella.pinto@correo.ucu.edu.uy','IsabellaP0123$'),
-('tomas.herrera@correo.ucu.edu.uy','TomasH4567#'),
-('juliana.silva@correo.ucu.edu.uy','JulianaS8901@'),
-('sebastian.morales@correo.ucu.edu.uy','SebastianM2345%'),
-('martina.rojas@correo.ucu.edu.uy','MartinaR6789^'),
-('federico.alonso@correo.ucu.edu.uy','FedericoA0123*'),
-('camila.navarro@correo.ucu.edu.uy','CamilaN4567!');
+('maria.rodriguez@correo.ucu.edu.uy','MariaR3456+'),
+('tomas.silva@correo.ucu.edu.uy','TomasS9999!'),
+('camila.duarte@correo.ucu.edu.uy','CamilaD0000?'),
 
--- ---------------- FACULTAD ----------------
+('jrodriguez@ucu.edu.uy','Docente123**'),
+('administrativo@ucu.edu.uy','Admin1234--');
+
+-- ==========================================================
+-- FACULTADES
+-- ==========================================================
 INSERT INTO facultad(nombre) VALUES
 ('Facultad de Ingeniería y Tecnologías'),
 ('Facultad de Derecho y Artes Liberales'),
@@ -53,7 +37,9 @@ INSERT INTO facultad(nombre) VALUES
 ('Facultad de Psicología y Bienestar Humano');
 
 
--- ---------------- PROGRAMAS ACADÉMICOS ----------------
+-- ==========================================================
+-- PROGRAMAS ACADÉMICOS
+-- ==========================================================
 INSERT INTO programas_academicos(nombre_programa, id_facultad, tipo) VALUES
 -- FACULTAD DE DERECHO Y ARTES LIBERALES (2)
 ('Abogacía',2,'Grado'),
@@ -174,28 +160,24 @@ INSERT INTO programas_academicos(nombre_programa, id_facultad, tipo) VALUES
 ('Diploma en Métodos de Investigación y Análisis de Datos',2,'Posgrado'),
 ('Diploma en Reputación Corporativa y Sostenibilidad',2,'Posgrado');
 
--- ---------------- PARTICIPANTES_PROGRAMAS_ACADÉMICOS ----------------
-INSERT INTO participantes_programa_academico(id_alumno_programa, ci_participante, nombre_programa, rol) VALUES
-(1,'12345678','Abogacía','Estudiante'),
-(2,'23456789','Ingeniería Civil','Estudiante'),
-(3,'34567890','Psicología','Estudiante'),
-(4,'45678901','Medicina','Estudiante'),
-(5,'56789012','Arquitectura','Estudiante'),
-(6,'67890123','Contador Público','Estudiante'),
-(7,'78901234','Comunicación','Estudiante'),
-(8,'89012345','Educación','Estudiante'),
-(9,'90123456','Diseño','Estudiante'),
-(10,'11223344','Abogacía','Estudiante'),
-(11,'22334455','Ingeniería en Informática','Estudiante'),
-(12,'33445566','Trabajo Social','Estudiante'),
-(13,'44556677','Marketing y Estrategia Comercial','Estudiante'),
-(14,'55667788','Ingeniería Mecánica','Estudiante'),
-(15,'66778899','Negocios Internacionales','Estudiante'),
-(16,'77889900','Licenciatura en Enfermería','Estudiante'),
-(17,'88990011','Arquitectura','Docente'),
-(18,'99001122','Psicomotricidad','Docente'),
-(19,'10111213','Filosofía','Docente');
--- ---------------- EDIFICIO ----------------
+-- ==========================================================
+-- PARTICIPANTES_PROGRAMAS_ACADÉMICOS (reducidos)
+-- ==========================================================
+INSERT INTO participantes_programa_academico(ci_participante, nombre_programa, rol) VALUES
+('48562347','Ingeniería en Informática','Estudiante'),
+('51238903','Dirección de Empresas','Estudiante'),
+('43782512','Psicología','Estudiante'),
+('40672157','Arquitectura','Estudiante'),
+('53910675','Medicina','Estudiante'),
+
+('29875645','Maestría en Ciencia de Datos','Docente');
+
+
+
+-- ==========================================================
+-- EDIFICIOS
+-- ==========================================================
+
 INSERT INTO edificio (nombre_edificio, direccion, departamento) VALUES
 ('Edificio Sacré Cœur','Av. 8 de Octubre 2738 ','Montevideo'),
 ('Edificio Semprún','Estero Bellaco 2771','Montevideo'),
@@ -209,7 +191,10 @@ INSERT INTO edificio (nombre_edificio, direccion, departamento) VALUES
 ('Edificio Candelaria', 'Av. Roosevelt y Florencia, parada 7 y 1/2', 'Maldonado'),
 ('Edificio San Fernando', 'Av. Roosevelt y Oslo, parada 7 y 1/2', 'Maldonado');
 
--- ---------------- SALA ----------------
+
+-- ==========================================================
+-- SALAS
+-- ==========================================================
 INSERT INTO sala(nombre_sala, edificio, capacidad, tipo_sala) VALUES
 ('Sala A1','Edificio Sacré Cœur',40,'Libre'),
 ('Sala A2','Edificio Sacré Cœur',30,'Libre'),
@@ -233,7 +218,9 @@ INSERT INTO sala(nombre_sala, edificio, capacidad, tipo_sala) VALUES
 ('Sala J2','Edificio San Fernando',35,'Libre');
 
 
--- ---------------- TURNO ----------------
+-- ==========================================================
+-- TURNOS
+-- ==========================================================
 INSERT INTO turno(hora_inicio, hora_fin) VALUES
 ('08:00:00', '09:00:00'),
 ('09:00:00', '10:00:00'),
@@ -251,56 +238,64 @@ INSERT INTO turno(hora_inicio, hora_fin) VALUES
 ('21:00:00', '22:00:00'),
 ('22:00:00', '23:00:00');
 
--- ---------------- RESERVA ----------------
-INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, ESTADO) VALUES
-('Sala A1','Edificio Sacré Cœur','2025-11-01',1,'Activa'),
-('Sala A2','Edificio Sacré Cœur','2025-11-02',2,'Activa'),
-('Sala B1','Edificio Semprún','2025-11-03',3,'Activa'),
-('Sala B2','Edificio Semprún','2025-11-04',4,'Activa'),
-('Sala C1','Edificio San José','2025-11-05',5,'Activa'),
-('Sala C2','Edificio San José','2025-11-06',6,'Activa'),
-('Sala D1','Edificio Mullin','2025-11-07',7,'Activa'),
-('Sala D2','Edificio Mullin','2025-11-08',8,'Activa'),
-('Sala E1','Edificio San Ignacio','2025-11-09',9,'Activa'),
-('Sala E2','Edificio San Ignacio','2025-11-10',10,'Activa'),
-('Sala F1','Edificio Athanasius','2025-11-11',11,'Activa'),
-('Sala F2','Edificio Athanasius','2025-11-12',12,'Activa'),
-('Sala G1','Edificio Madre Marta','2025-11-13',13,'Activa'),
-('Sala G2','Edificio Madre Marta','2025-11-14',14,'Activa'),
-('Sala H1','Casa Xalambri','2025-11-15',15,'Activa');
+-- ==========================================================
+-- RESERVAS (GRUPALES Y CON CASOS DE DEFENSA)
+-- ==========================================================
 
--- ---------------- RESERVA_PARTICIPANTE ----------------
-INSERT INTO reserva_participante(ci_participante, id_reserva, fecha_solicitud_reserva, asistencia) VALUES
-('12345678',1,'2025-10-24',TRUE),
-('23456789',2,'2025-10-24',TRUE),
-('34567890',3,'2025-10-24',FALSE),
-('45678901',4,'2025-10-24',TRUE),
-('56789012',5,'2025-10-24',FALSE),
-('67890123',6,'2025-10-24',TRUE),
-('78901234',7,'2025-10-24',TRUE),
-('89012345',8,'2025-10-24',FALSE),
-('90123456',9,'2025-10-24',TRUE),
-('11223344',10,'2025-10-24',TRUE),
-('22334455',11,'2025-10-24',FALSE),
-('33445566',12,'2025-10-24',TRUE),
-('44556677',13,'2025-10-24',TRUE),
-('55667788',14,'2025-10-24',FALSE),
-('66778899',15,'2025-10-24',TRUE);
+-- 1) Reserva con asistencia grupal
+INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, estado)
+VALUES ('Sala A1','Edificio Sacré Cœur','2025-11-20',1,'Activa');
 
--- ---------------- SANCION_PARTICIPANTE ----------------
-INSERT INTO sancion_participante(ci_participante, fecha_inicio, fecha_fin) VALUES
-('12345678','2025-10-25','2025-11-01'),
-('23456789','2025-10-26','2025-11-02'),
-('34567890','2025-10-27','2025-11-03'),
-('45678901','2025-10-28','2025-11-04'),
-('56789012','2025-10-29','2025-11-05'),
-('67890123','2025-10-30','2025-11-06'),
-('78901234','2025-10-31','2025-11-07'),
-('89012345','2025-11-01','2025-11-08');
+-- 2) Reserva sin asistencia → generará sanciones grupales
+INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, estado)
+VALUES ('Sala A2','Edificio Sacré Cœur','2025-11-20',2,'Activa');
+
+-- 3) Reserva que se cancela por desconfirmación total (trigger)
+INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, estado)
+VALUES ('Sala B1','Edificio Semprún','2025-11-20',1,'Activa');
+
+-- 4–5) Bloque consecutivo sin asistencia
+INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, estado)
+VALUES ('Sala C1','Edificio San Ignacio','2025-11-20',1,'Activa'),
+       ('Sala C1','Edificio San Ignacio','2025-11-20',2,'Activa');
 
 
-INSERT INTO login(email, password) VALUE
-('administrativo@ucu.edu.uy', 'admin123');
+-- ==========================================================
+-- RESERVA - PARTICIPANTE (GRUPALES)
+-- ==========================================================
+
+-- Reserva 1: asistencia completa de grupo
+INSERT INTO reserva_participante(ci_participante,id_reserva,fecha_solicitud_reserva,asistencia,confirmado) VALUES
+('48562347',1,'2025-11-01',TRUE,TRUE),
+('51238903',1,'2025-11-01',TRUE,TRUE),
+('43782512',1,'2025-11-01',TRUE,TRUE);
+
+-- Reserva 2: sin asistencia → sanciones automáticas
+INSERT INTO reserva_participante(ci_participante,id_reserva,fecha_solicitud_Reserva,asistencia,confirmado) VALUES
+('40672157',2,'2025-11-01',FALSE,TRUE),
+('53910675',2,'2025-11-01',FALSE,TRUE);
+
+-- Reserva 3: será cancelada por desconfirmación total
+INSERT INTO reserva_participante(ci_participante,id_reserva,fecha_solicitud_reserva,asistencia,confirmado) VALUES
+('48562347',3,'2025-11-01',TRUE,TRUE),
+('51238903',3,'2025-11-01',TRUE,TRUE);
+
+-- Reserva 4–5: bloque consecutivo sin asistencia
+INSERT INTO reserva_participante(ci_participante,id_reserva,fecha_solicitud_reserva,asistencia,confirmado) VALUES
+('43782512',4,'2025-11-01',FALSE,TRUE),
+('40672157',4,'2025-11-01',FALSE,TRUE),
+('53910675',4,'2025-11-01',FALSE,TRUE),
+
+('43782512',5,'2025-11-01',FALSE,TRUE),
+('40672157',5,'2025-11-01',FALSE,TRUE),
+('53910675',5,'2025-11-01',FALSE,TRUE);
+
+
+-- ==========================================================
+-- SANCIONES (historial para demo)
+-- ==========================================================
+INSERT INTO sancion_participante(ci_participante,fecha_inicio,fecha_fin,activa)
+VALUES ('51238903','2025-10-01','2025-11-01',FALSE);
 
 
 

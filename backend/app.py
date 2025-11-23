@@ -142,7 +142,7 @@ def reservar():
     # ============================================
     # Cargar datos para el formulario
     # ============================================
-    conn = get_connection()
+    conn = get_connection("login")
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("SELECT nombre_edificio FROM edificio;")
