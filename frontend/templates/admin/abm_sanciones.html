@@ -47,7 +47,8 @@
     type="date" 
     name="fecha_inicio" 
     id="fecha_inicio" 
-    required>
+    value="{{ hoy }}" 
+    disabled>
 
   <label for="fecha_fin"><strong>Fin:</strong></label>
   <input 
@@ -60,7 +61,7 @@
   <button type="submit" class="btn-agregar">Agregar sanción</button>
 </form>
 
-  <!-- 🔹 Tabla de sanciones -->
+  <!-- Tabla de sanciones -->
   <table class="tabla-abm">
     <thead>
       <tr>
@@ -75,7 +76,7 @@
     </thead>
     <tbody>
       {% for s in sanciones %}
-      <tr class="{% if s.activa == 1 %}activa{% else %}expirada{% endif %}">
+      <tr>
         <form method="POST">
           
           <td>{{ s.ci_participante }}</td>

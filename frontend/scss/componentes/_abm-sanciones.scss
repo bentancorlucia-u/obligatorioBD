@@ -102,33 +102,6 @@ body.body-admin {
       border-bottom: 1px solid #eee;
     }
 
-    tr.activa { background-color: #ffe5e5; }
-    tr.expirada { background-color: #f7f7f7; }
-
-    .btn-eliminar {
-        background-color: #c0392b;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 0.45rem 0.9rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-
-        &:hover {
-            background-color: darken(#c0392b, 8%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        }
-
-        &:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-        }
-
     input[type="date"] {
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -150,16 +123,6 @@ body.body-admin {
 
     &:hover {
       background-color: darken($azul-oscuro, 8%);
-    }
-  }
-
-  .btn-eliminar {
-    background-color: #e74c3c;
-    color: white;
-    margin-left: 0.5rem;
-
-    &:hover {
-      background-color: darken(#e74c3c, 8%);
     }
   }
   }

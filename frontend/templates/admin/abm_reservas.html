@@ -91,57 +91,62 @@
     <tbody>
         {% for r in reservas %}
         <tr>
-        <td>{{ r.id_reserva }}</td>
-        <td>{{ r.edificio }}</td>
-        <td>{{ r.nombre_sala }}</td>
-        <td>
-        <input 
-            type="date" 
-            name="fecha_nueva" 
-            value="{{ r.fecha.strftime('%Y-%m-%d') }}" 
-            required>
-        </td>
-
-        <!-- Turno -->
-        <td>
-            <form method="POST">
+        <form method="POST">
             <input type="hidden" name="accion" value="modificar">
             <input type="hidden" name="id_reserva" value="{{ r.id_reserva }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <select name="id_turno_nuevo">
-                {% for t in turnos %}
-                {% set inicio_horas_t = (t.hora_inicio.total_seconds() // 3600) | int %}
-                {% set inicio_minutos_t = ((t.hora_inicio.total_seconds() % 3600) // 60) | int %}
-                {% set fin_horas_t = (t.hora_fin.total_seconds() // 3600) | int %}
-                {% set fin_minutos_t = ((t.hora_fin.total_seconds() % 3600) // 60) | int %}
-                <option value="{{ t.id_turno }}" {% if t.id_turno == r.id_turno %}selected{% endif %}>
-                {{ "%02d:%02d" % (inicio_horas_t, inicio_minutos_t) }} - {{ "%02d:%02d" % (fin_horas_t, fin_minutos_t) }}
-                </option>
-                {% endfor %}
-            </select>
-        </td>
+            <td>{{ r.id_reserva }}</td>
+            <td>{{ r.edificio }}</td>
+            <td>{{ r.nombre_sala }}</td>
 
-        <!-- Ocupación -->
-        <td><strong>{{ r.ocupacion }}</strong>/{{ r.capacidad }}</td>
+            <!-- Fecha -->
+            <td>
+                <input 
+                    type="date" 
+                    name="fecha_nueva" 
+                    value="{{ r.fecha.strftime('%Y-%m-%d') }}" 
+                    required>
+            </td>
 
-        <!-- Estado -->
-        <td>
-            <select name="estado_nuevo">
-                {% for estado in ['Activa', 'Cancelada', 'Finalizada', 'Sin asistencia'] %}
-                <option value="{{ estado }}" {% if r.estado == estado %}selected{% endif %}>{{ estado }}</option>
-                {% endfor %}
-            </select>
-        </td>
+            <!-- Turno -->
+            <td>
+                <select name="id_turno_nuevo">
+                    {% for t in turnos %}
+                        {% set inicio_h = (t.hora_inicio.total_seconds() // 3600) | int %}
+                        {% set inicio_m = ((t.hora_inicio.total_seconds() % 3600) // 60) | int %}
+                        {% set fin_h = (t.hora_fin.total_seconds() // 3600) | int %}
+                        {% set fin_m = ((t.hora_fin.total_seconds() % 3600) // 60) | int %}
+                        <option value="{{ t.id_turno }}" {% if t.id_turno == r.id_turno %}selected{% endif %}>
+                            {{ "%02d:%02d" % (inicio_h, inicio_m) }} - {{ "%02d:%02d" % (fin_h, fin_m) }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
 
-        <!-- Guardar -->
-        <td>
-            <button type="submit" class="btn-agregar">Guardar cambios</button>
-            </form>
-        </td>
+            <!-- Ocupación -->
+            <td><strong>{{ r.ocupacion }}</strong>/{{ r.capacidad }}</td>
+
+            <!-- Estado -->
+            <td>
+                <select name="estado_nuevo">
+                    {% for estado in ['Activa', 'Cancelada', 'Finalizada', 'Sin asistencia'] %}
+                        <option value="{{ estado }}" {% if r.estado == estado %}selected{% endif %}>
+                            {{ estado }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+
+            <!-- Botón -->
+            <td>
+                <button type="submit" class="btn-agregar">Guardar cambios</button>
+            </td>
+
+        </form>
         </tr>
         {% endfor %}
-    </tbody>
+</tbody>
 </table>
 
 <a href="{{url_for('abm_reservas_participantes')}}" class="btn-logout">Administrar participantes de las reservas</a>

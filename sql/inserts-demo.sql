@@ -20,8 +20,7 @@ INSERT INTO participantes(ci, nombre, apellido, email) VALUES
 ('77889900','Sebastián','Morales','sebastian.morales@correo.ucu.edu.uy'),
 ('88990011','Martina','Rojas','martina.rojas@correo.ucu.edu.uy'),
 ('99001122','Federico','Alonso','federico.alonso@correo.ucu.edu.uy'),
-('10111213','Camila','Navarro','camila.navarro@correo.ucu.edu.uy'),
-('12131415','Diego','Ortiz','diego.ortiz@correo.ucu.edu.uy');
+('10111213','Camila','Navarro','camila.navarro@correo.ucu.edu.uy');
 
 -- ---------------- LOGIN ----------------
 INSERT INTO login(email, password) VALUES
@@ -43,8 +42,7 @@ INSERT INTO login(email, password) VALUES
 ('sebastian.morales@correo.ucu.edu.uy','SebastianM2345%'),
 ('martina.rojas@correo.ucu.edu.uy','MartinaR6789^'),
 ('federico.alonso@correo.ucu.edu.uy','FedericoA0123*'),
-('camila.navarro@correo.ucu.edu.uy','CamilaN4567!'),
-('diego.ortiz@correo.ucu.edu.uy','DiegoO8901-');
+('camila.navarro@correo.ucu.edu.uy','CamilaN4567!');
 
 -- ---------------- FACULTAD ----------------
 INSERT INTO facultad(nombre) VALUES
@@ -196,8 +194,7 @@ INSERT INTO participantes_programa_academico(id_alumno_programa, ci_participante
 (16,'77889900','Licenciatura en Enfermería','Estudiante'),
 (17,'88990011','Arquitectura','Docente'),
 (18,'99001122','Psicomotricidad','Docente'),
-(19,'10111213','Filosofía','Docente'),
-(20,'12131415','Economía','Docente');
+(19,'10111213','Filosofía','Docente');
 -- ---------------- EDIFICIO ----------------
 INSERT INTO edificio (nombre_edificio, direccion, departamento) VALUES
 ('Edificio Sacré Cœur','Av. 8 de Octubre 2738 ','Montevideo'),

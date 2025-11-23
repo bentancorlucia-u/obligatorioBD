@@ -603,6 +603,31 @@ p {
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
+/* Cuando HAY participantes */
+.participantes-wrapper {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Chips */
+.participante-item {
+  background-color: rgba(0, 171, 232, 0.15);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: #173363;
+  text-align: center;
+}
+
+/* Cuando NO hay participantes */
+.participantes-vacio {
+  text-align: center;
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
 /* Responsivo */
 @media (max-width: 700px) {
   table {
@@ -1360,7 +1385,7 @@ body.body-admin {
   color: #16386d;
   font-size: 1rem;
 }
-.form-agregar-participante form.form-agregar input[type=text] {
+.form-agregar-participante form.form-agregar input[type=number] {
   padding: 0.6rem 1rem;
   border-radius: 10px;
   border: 1px solid #ccc;
@@ -1370,12 +1395,12 @@ body.body-admin {
   text-align: center;
   transition: all 0.25s ease;
 }
-.form-agregar-participante form.form-agregar input[type=text]:focus {
+.form-agregar-participante form.form-agregar input[type=number]:focus {
   border-color: #16386d;
   box-shadow: 0 0 6px rgba(22, 56, 109, 0.25);
   outline: none;
 }
-.form-agregar-participante form.form-agregar input[type=text]::placeholder {
+.form-agregar-participante form.form-agregar input[type=number]::placeholder {
   color: #999;
 }
 .form-agregar-participante form.form-agregar .btn-agregar {
@@ -1533,33 +1558,6 @@ body.body-admin table.tabla-admin th, body.body-admin table.tabla-admin td {
   text-align: center;
   border-bottom: 1px solid #eee;
 }
-body.body-admin table.tabla-admin tr.activa {
-  background-color: #ffe5e5;
-}
-body.body-admin table.tabla-admin tr.expirada {
-  background-color: #f7f7f7;
-}
-body.body-admin table.tabla-admin .btn-eliminar {
-  background-color: #c0392b;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.45rem 0.9rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-body.body-admin table.tabla-admin .btn-eliminar:hover {
-  background-color: rgb(158.6655319149, 47.1038297872, 35.5344680851);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-body.body-admin table.tabla-admin .btn-eliminar:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
 body.body-admin table.tabla-admin input[type=date] {
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -1579,14 +1577,6 @@ body.body-admin table.tabla-admin .btn-editar {
 }
 body.body-admin table.tabla-admin .btn-editar:hover {
   background-color: rgb(15.3081967213, 33.9442622951, 65.8918032787);
-}
-body.body-admin table.tabla-admin .btn-eliminar {
-  background-color: #e74c3c;
-  color: white;
-  margin-left: 0.5rem;
-}
-body.body-admin table.tabla-admin .btn-eliminar:hover {
-  background-color: rgb(222.7808219178, 45.698630137, 27.4191780822);
 }
 
 .body-admin {

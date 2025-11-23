@@ -67,11 +67,15 @@
                 </td>
 
                 <!-- Participantes -->
-                <td>
+                <td class="col-participantes">
                     {% if r.participantes and r.participantes|length > 0 %}
-                        {{ r.participantes | join(", ") }}
+                        <div class="participantes-wrapper">
+                            {% for p in r.participantes %}
+                                <div class="participante-item">{{ p }}</div>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                        -
+                        <span class="participantes-vacio">-</span>
                     {% endif %}
                 </td>
 

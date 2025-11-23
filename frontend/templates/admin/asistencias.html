@@ -40,6 +40,7 @@
         <p><strong>Turno:</strong> {{ reserva.hora_inicio }} – {{ reserva.hora_fin }}</p>
         <p><strong>Capacidad:</strong> {{ participantes|length }}/{{ reserva.capacidad }}</p>
         <p><strong>Tipo de sala:</strong> {{ reserva.tipo_sala }}</p>
+        <p><strong>Estado:</strong> {{ reserva.estado }}</p>
       </div>
     </div>
 
@@ -67,17 +68,27 @@
             <td>{{ p.nombre }}</td>
             <td>{{ p.apellido }}</td>
             <td>
-              <select name="asistencia_{{ p.ci_participante }}" class="select-asistencia">
-                <option value="1" {% if p.asistencia == 1 %}selected{% endif %}>Asiste</option>
-                <option value="0" {% if p.asistencia == 0 %}selected{% endif %}>Falta</option>
+              <select name="asistencia_{{ p.ci_participante }}"
+                      class="select-asistencia"
+                      {% if not editable %}disabled{% endif %}>
+                  <option value="1" {% if p.asistencia == 1 %}selected{% endif %}>Asiste</option>
+                  <option value="0" {% if p.asistencia == 0 %}selected{% endif %}>Falta</option>
               </select>
+
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
 
+      {% if editable %}
       <button type="submit" class="btn-agregar">Guardar cambios</button>
+      {% else %}
+      <p class="mensaje-info">
+        Esta reserva ya no puede editarse porque finalizó hace más de 10 minutos.
+      </p>
+      {% endif %}
+
     </form>
   {% elif id_reserva %}
     <p>No se encontraron participantes para el ID ingresado.</p>

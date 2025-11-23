@@ -57,7 +57,7 @@ CREATE TABLE edificio (
 );
 
 CREATE TABLE sala (
-    nombre_sala VARCHAR(100) NOT NULL,
+    nombre_sala VARCHAR(50) NOT NULL,
     edificio VARCHAR(100) NOT NULL,
     capacidad SMALLINT,
     tipo_sala ENUM('Libre', 'Posgrado', 'Docente'),
@@ -115,6 +115,7 @@ ALTER TABLE reserva ADD INDEX idx_fecha_turno (fecha, id_turno);
 ALTER TABLE sala ADD INDEX idx_tipo_sala (tipo_sala);
 
 ALTER TABLE login DROP FOREIGN KEY login_ibfk_1;
+
 ALTER TABLE login
 ADD CONSTRAINT fk_login_participantes_email
 FOREIGN KEY (email)
