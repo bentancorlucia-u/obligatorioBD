@@ -1080,7 +1080,7 @@ def abm_reservas():
 
             cursor.execute("""
                 INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva, asistencia)
-                VALUES (%s, %s, NOW(), TRUE);
+                VALUES (%s, %s, NOW(), FALSE);
             """, (ci_participante, nueva_reserva))
             conn.commit()
 
@@ -1405,7 +1405,7 @@ def abm_reservas_participantes():
                                         cursor.execute("""
                                             INSERT INTO reserva_participante 
                                             (ci_participante, id_reserva, fecha_solicitud_reserva, asistencia)
-                                            VALUES (%s, %s, NOW(), TRUE);
+                                            VALUES (%s, %s, NOW(), FALSE);
                                         """, (ci_nuevo, id_reserva))
                                         conn.commit()
                                         flash("Participante agregado correctamente", "success")
@@ -1430,6 +1430,8 @@ def abm_reservas_participantes():
 
 
 
+from datetime import datetime, timedelta
+
 @app.route("/admin/asistencias", methods=["GET", "POST"])
 @login_required
 def asistencias():
@@ -1441,15 +1443,16 @@ def asistencias():
 
     participantes = []
     reserva_info = None
+    editable = False  # <-- NUEVO
 
     if request.method == "POST":
         accion = request.form.get("accion")
         id_reserva = request.form.get("id_reserva")
 
-        # Verificar que la reserva exista
+        # Obtener reserva
         cursor.execute("""
-            SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha, 
-                   t.hora_inicio, t.hora_fin, s.capacidad, s.tipo_sala
+            SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha,
+                   t.hora_inicio, t.hora_fin, s.capacidad, s.tipo_sala, r.estado
             FROM reserva r
             JOIN turno t ON r.id_turno = t.id_turno
             JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
@@ -1461,34 +1464,58 @@ def asistencias():
             flash("No existe una reserva con ese ID.", "error")
             return render_template("admin/asistencias.html")
 
-        # ================================
-        # GUARDAR ASISTENCIAS
-        # ================================
+       # ============================================
+        # CALCULAR SI ES EDITABLE (10 min luego de fin)
+        # ============================================
+
+        fecha = reserva_info["fecha"]
+        hora_fin_raw = reserva_info["hora_fin"]
+
+        # Si MySQL devolvió un timedelta → convertirlo a time válido
+        if isinstance(hora_fin_raw, timedelta):
+            total_seconds = int(hora_fin_raw.total_seconds())
+            horas = total_seconds // 3600
+            minutos = (total_seconds % 3600) // 60
+            segundos = total_seconds % 60
+            hora_fin = time(horas, minutos, segundos)
+        else:
+            hora_fin = hora_fin_raw  # ya es time
+
+        dt_fin = datetime.combine(fecha, hora_fin)
+        limite = dt_fin + timedelta(minutes=10)
+        ahora = datetime.now()
+
+        editable = ahora <= limite
+
+
+        # ============================================
+        # GUARDAR ASISTENCIAS SI ES EDITABLE
+        # ============================================
         if accion == "guardar":
-            # 1) Obtener lista actual para saber quiénes están en esta reserva
-            cursor.execute("""
-                SELECT ci_participante
-                FROM reserva_participante
-                WHERE id_reserva = %s;
-            """, (id_reserva,))
-            todos = cursor.fetchall()
-
-            # 2) Para cada participante: si no aparece en el form → asistencia = 0
-            for p in todos:
-                ci = p["ci_participante"]
-                checkbox_name = f"asistencia_{ci}"
-                asistencia = 1 if checkbox_name in request.form else 0
-
+            if not editable:
+                flash("La reserva ya no puede editarse (pasaron más de 10 minutos).", "warning")
+            else:
                 cursor.execute("""
-                    UPDATE reserva_participante
-                    SET asistencia = %s
-                    WHERE id_reserva = %s AND ci_participante = %s;
-                """, (asistencia, id_reserva, ci))
+                    SELECT ci_participante
+                    FROM reserva_participante
+                    WHERE id_reserva = %s;
+                """, (id_reserva,))
+                todos = cursor.fetchall()
 
-            conn.commit()
-            flash("Asistencias actualizadas correctamente.", "success")
+                for p in todos:
+                    ci = p["ci_participante"]
+                    asistencia = request.form.get(f"asistencia_{ci}", "0")
 
-        # Obtener lista actualizada para mostrar
+                    cursor.execute("""
+                        UPDATE reserva_participante
+                        SET asistencia = %s
+                        WHERE id_reserva = %s AND ci_participante = %s;
+                    """, (asistencia, id_reserva, ci))
+
+                conn.commit()
+                flash("Asistencias actualizadas correctamente.", "success")
+
+        # Obtener lista actualizada
         cursor.execute("""
             SELECT rp.ci_participante, p.nombre, p.apellido, rp.asistencia
             FROM reserva_participante rp
@@ -1497,15 +1524,14 @@ def asistencias():
         """, (id_reserva,))
         participantes = cursor.fetchall()
 
-        if not participantes:
-            flash("No se encontraron participantes para el ID ingresado.", "warning")
-
     conn.close()
     return render_template(
         "admin/asistencias.html",
         reserva=reserva_info,
-        participantes=participantes
+        participantes=participantes,
+        editable=editable  # <-- ENVIAMOS ESTADO A HTML
     )
+
 
 
 
