@@ -58,6 +58,11 @@ GRANT SELECT ON ucu_reservas.sala                          TO 'login'@'localhost
 GRANT SELECT ON ucu_reservas.edificio                      TO 'login'@'localhost';
 GRANT SELECT ON ucu_reservas.turno                         TO 'login'@'localhost';
 
+-- notificaciones
+GRANT INSERT, UPDATE, SELECT
+ON ucu_reservas.notificacion
+TO 'login'@'localhost';
+
 /* Lecturas de reservas y sanciones */
 GRANT SELECT ON ucu_reservas.reserva                       TO 'login'@'localhost';
 GRANT SELECT ON ucu_reservas.reserva_participante          TO 'login'@'localhost';

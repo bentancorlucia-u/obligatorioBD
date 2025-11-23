@@ -11,19 +11,31 @@ DELIMITER //
        * Se sanciona a todos los participantes confirmados
          (solo si NO tienen una sanción activa).
    ===================================================================== */
+DELIMITER //
+
 CREATE TRIGGER trg_sancionar_por_inasistencia
 AFTER UPDATE ON reserva
 FOR EACH ROW
 BEGIN
-    -- Solo sancionar cuando se cambia a SIN ASISTENCIA
-    IF NEW.estado = 'Sin Asistencia' AND OLD.estado <> 'Sin Asistencia' THEN
+    -- Solo cuando la reserva pase a "sin asistencia"
+    IF NEW.estado = 'sin asistencia' AND OLD.estado <> 'sin asistencia' THEN
 
+        -- Insertar sanción (solo si no tiene otra activa)
         INSERT INTO sancion_participante (ci_participante, fecha_inicio, fecha_fin, activa)
-        SELECT
-            rp.ci_participante,
-            CURDATE(),
-            DATE_ADD(CURDATE(), INTERVAL 2 MONTH),
-            TRUE
+        SELECT rp.ci_participante, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 MONTH), TRUE
+        FROM reserva_participante rp
+        WHERE rp.id_reserva = NEW.id_reserva
+          AND NOT EXISTS (
+                SELECT 1
+                FROM sancion_participante s
+                WHERE s.ci_participante = rp.ci_participante
+                  AND s.activa = TRUE
+          );
+
+        -- Crear notificación automática por sanción
+        INSERT INTO notificacion (ci_participante, mensaje)
+        SELECT rp.ci_participante,
+               CONCAT('Has sido sancionado por inasistencia en la reserva #', NEW.id_reserva)
         FROM reserva_participante rp
         WHERE rp.id_reserva = NEW.id_reserva
           AND NOT EXISTS (
@@ -35,6 +47,9 @@ BEGIN
 
     END IF;
 END//
+
+DELIMITER ;
+
 
 /* =====================================================================
    TRIGGER 2 — CANCELAR RESERVA CUANDO TODOS LOS PARTICIPANTES SON
@@ -136,6 +151,42 @@ BEGIN
 
         END IF;
     END IF;
+END//
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE TRIGGER trg_lista_espera_asignacion
+AFTER DELETE ON reserva_participante
+FOR EACH ROW
+BEGIN
+    DECLARE siguiente_ci CHAR(8);
+
+    -- obtener siguiente en lista
+    SELECT ci_participante INTO siguiente_ci
+    FROM lista_espera
+    WHERE id_reserva = OLD.id_reserva
+    ORDER BY fecha ASC
+    LIMIT 1;
+
+    IF siguiente_ci IS NOT NULL THEN
+        -- agregar a la reserva
+        INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva)
+        VALUES (siguiente_ci, OLD.id_reserva, CURDATE());
+
+        -- sacar de lista
+        DELETE FROM lista_espera
+        WHERE ci_participante = siguiente_ci
+          AND id_reserva = OLD.id_reserva
+        LIMIT 1;
+
+        -- notificación
+        INSERT INTO notificacion (ci_participante, mensaje)
+        VALUES (siguiente_ci, CONCAT('Entraste automáticamente a la reserva #', OLD.id_reserva, ' desde la lista de espera.'));
+    END IF;
+
 END//
 
 DELIMITER ;

@@ -131,6 +131,31 @@
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
+.btn-notificaciones {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+
+  background-color: $azul-claro;
+  color: $blanco;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    background-color: $azul-oscuro;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+
 @media (max-width: 1000px) {
   .card {
     width: 300px;

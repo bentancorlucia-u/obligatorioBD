@@ -184,6 +184,18 @@ CREATE TABLE sancion_participante (
     CHECK (fecha_fin >= fecha_inicio)
 );
 
+-- ==========================================================
+-- NOTIFICACIONES
+-- ==========================================================
+CREATE TABLE notificacion (
+    id_notificacion INT AUTO_INCREMENT PRIMARY KEY,
+    ci_participante CHAR(8) NOT NULL,
+    mensaje VARCHAR(255) NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    leida BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (ci_participante) REFERENCES participantes(ci)
+);
+
 CREATE INDEX idx_sancion_ci ON sancion_participante(ci_participante);
 
 

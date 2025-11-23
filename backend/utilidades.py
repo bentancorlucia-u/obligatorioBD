@@ -87,3 +87,13 @@ def normalizar_sala(nombre):
             normalizadas.append(p.capitalize())
 
     return " ".join(normalizadas)
+
+# ==================================================
+# NOTIFICACIONES
+# ==================================================
+
+def crear_notificacion(cursor, ci, mensaje):
+    cursor.execute("""
+        INSERT INTO notificacion (ci_participante, mensaje)
+        VALUES (%s, %s)
+    """, (ci, mensaje))

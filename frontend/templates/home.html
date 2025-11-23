@@ -13,14 +13,18 @@
 </head>
 <body class="body-home">
 
+    <a href="{{url_for('notificaciones')}}" class="btn-notificaciones">Notificaciones</a>
+
     <h1>Hola, {{ current_user.nombre }} {{ current_user.apellido }}</h1>
     <p class="tipo-usuario">{{ tipo_persona }}</p>
+
 
     <div class="cards">
         <a href="{{url_for('mis_reservas')}}" class="card">Mis Reservas</a>
         <a href="{{url_for('reservar')}}" class="card reservar">Reservar Sala de Estudio</a>
         <a href="{{url_for('unirme')}}" class="card">Unirme a una Sala</a>
         <a href="{{url_for('sanciones')}}" class="card">Mis Sanciones</a>
+        
     </div>
     
 

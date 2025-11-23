@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificaciones</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="datos">
+    <!-- Botón volver al inicio -->
+    <a href="{{ url_for('home') }}" class="btn-volver-inicio">Volver al inicio</a>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container margin-bottom">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="contenedor-principal">
+        <h2 class="titulo-pagina">Notificaciones</h2>
+
+        {% if notificaciones %}
+            <div class="lista-notificaciones">
+                {% for n in notificaciones %}
+                    <div class="notificacion-item {% if not n.leida %}no-leida{% else %}leida{% endif %}">
+                        <div class="notificacion-texto">
+                            <p>{{ n.mensaje }}</p>
+                        </div>
+                        <div class="notificacion-meta">
+                            <span class="notificacion-fecha">
+                                {{ n.fecha.strftime("%d/%m/%Y %H:%M") }}
+                            </span>
+                            {% if not n.leida %}
+                                <span class="badge-nueva">Nueva</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mensaje-vacio">
+                No tenés notificaciones por el momento.
+            </p>
+        {% endif %}
+    </main>
+</body>
+</html>

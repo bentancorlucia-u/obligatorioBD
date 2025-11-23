@@ -17,7 +17,8 @@ from utilidades import (
     validar_cedula_uruguaya,
     validar_email_institucional,
     normalizar_nombre,
-    normalizar_sala
+    normalizar_sala,
+    crear_notificacion
 )
 from reportes import reportes_bp
 
@@ -219,7 +220,7 @@ def mis_reservas():
 @app.route("/cancelar_participacion/<int:id_reserva>", methods=["POST"])
 @login_required
 def cancelar_participacion(id_reserva):
-    conn = get_connection("login")
+    conn = get_connection("administrativo")
     cursor = conn.cursor(dictionary=True)
     ci = current_user.ci  # o el campo que tengas para identificar al participante
 
@@ -258,10 +259,16 @@ def cancelar_participacion(id_reserva):
             SET estado = 'cancelada'
             WHERE id_reserva = %s;
         """, (id_reserva,))
+
+        # Notificar a los que estaban
+        crear_notificacion(cursor, ci, f"Tu reserva #{id_reserva} fue cancelada por falta de participantes.")
         conn.commit()
+
         flash("Se canceló toda la reserva porque no quedan participantes confirmados.", "warning")
     else:
         flash("Tu participación en la reserva fue cancelada.", "success")
+        crear_notificacion(cursor, ci, f"Cancelaste tu participación en la reserva #{id_reserva}.")
+        conn.commit()
 
     conn.close()
     return redirect(url_for("mis_reservas"))
@@ -436,6 +443,30 @@ def unirme():
     return render_template("unirme.html", usuario=current_user)
 
 
+@app.route("/notificaciones")
+@login_required
+def notificaciones():
+    conn = get_connection("login")
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT id_notificacion, mensaje, fecha, leida
+        FROM notificacion
+        WHERE ci_participante = %s
+        ORDER BY fecha DESC;
+    """, (current_user.ci,))
+
+    notificaciones = cursor.fetchall()
+
+    # marcar como leídas
+    cursor.execute("""
+        UPDATE notificacion
+        SET leida = TRUE
+        WHERE ci_participante = %s;
+    """, (current_user.ci,))
+
+    conn.commit()
+    return render_template("notificaciones.html", notificaciones=notificaciones)
 
 # ==================================================
 # RUTAS PANEL ADMINISTRADOR
@@ -1169,6 +1200,12 @@ def abm_reservas():
                     conn.commit()
 
                     flash("Reserva actualizada correctamente.", "success")
+                    # Notificar a todos los participantes
+                    cursor.execute("SELECT ci_participante FROM reserva_participante WHERE id_reserva = %s", (id_reserva,))
+                    for p in cursor.fetchall():
+                        crear_notificacion(cursor, p["ci_participante"], f"La reserva #{id_reserva} fue modificada por un administrador.")
+                    conn.commit()
+
 
                     # 🔹 Si se canceló, borrar los participantes asociados
                     if nuevo_estado.lower() == "cancelada":
@@ -1666,6 +1703,10 @@ def abm_sanciones():
 
             conn.commit()
             flash("Sanción agregada correctamente.", "success")
+
+            crear_notificacion(cursor, ci_participante, "Recibiste una sanción por inasistencia.")
+            conn.commit()
+
 
         except Exception as e:
             conn.rollback()
