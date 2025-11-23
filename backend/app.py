@@ -908,7 +908,7 @@ def abm_reservas():
             fecha_reserva = datetime.strptime(fecha, "%Y-%m-%d").date()
 
             if fecha_reserva < hoy:
-                flash("No se puede crear una reserva en una fecha pasada.", "warning")
+                flash("No se puede crear una reserva en una fecha pasada", "warning")
                 return redirect(url_for("abm_reservas"))
 
             # =======================================
@@ -928,14 +928,14 @@ def abm_reservas():
                     hora_actual = datetime.now().time()
 
                     if hora_turno <= hora_actual:
-                        flash("No se puede reservar un turno que ya comenzó o ya pasó.", "warning")
+                        flash("No se puede reservar un turno que ya comenzó o ya pasó", "warning")
                         return redirect(url_for("abm_reservas"))
                     
             # =======================================
             # Validar formato de CI (solo números, 7–8 dígitos)
             # =======================================
             if not ci_participante.isdigit() or len(ci_participante) not in (7, 8):
-                flash("La CI debe tener solo números y 7 u 8 dígitos.", "warning")
+                flash("La CI debe tener solo números y 7 u 8 dígitos", "warning")
                 return redirect(url_for("abm_reservas"))
 
             # =======================================
@@ -944,7 +944,7 @@ def abm_reservas():
             cursor.execute("SELECT ci FROM participantes WHERE ci = %s;", (ci_participante,))
             participante = cursor.fetchone()
             if not participante:
-                flash("No existe ningún participante con esa CI.", "error")
+                flash("No existe ningún participante con esa CI", "error")
                 return redirect(url_for("abm_reservas"))
 
             # 🔹 Nuevo: verificar que esté en un programa académico
@@ -1114,6 +1114,37 @@ def abm_reservas():
                 nombre_sala = datos["nombre_sala"]
                 edificio = datos["edificio"]
 
+                # =======================================
+                # Validar fecha nueva (no pasada)
+                # =======================================
+                hoy = date.today()
+                fecha_modificada = datetime.strptime(fecha_nueva, "%Y-%m-%d").date()
+
+                if fecha_modificada < hoy:
+                    flash("No se puede mover la reserva a una fecha pasada.", "warning")
+                    return redirect(url_for("abm_reservas"))
+
+
+                # =======================================
+                # Validar turno si la fecha nueva es hoy
+                # =======================================
+                if fecha_modificada == hoy:
+                    cursor.execute("""
+                        SELECT TIME_FORMAT(hora_inicio, '%H:%i') AS inicio
+                        FROM turno
+                        WHERE id_turno = %s;
+                    """, (id_turno_nuevo,))
+
+                    turno = cursor.fetchone()
+
+                    if turno:
+                        hora_turno = datetime.strptime(turno["inicio"], "%H:%M").time()
+                        hora_actual = datetime.now().time()
+
+                        if hora_turno <= hora_actual:
+                            flash("No se puede mover la reserva a un turno que ya pasó.", "warning")
+                            return redirect(url_for("abm_reservas"))
+
                 # Verificar si ya hay reserva activa con esa misma sala, edificio, fecha y turno
                 cursor.execute("""
                     SELECT 1 FROM reserva
@@ -1127,7 +1158,7 @@ def abm_reservas():
                 ocupada = cursor.fetchone()
 
                 if ocupada:
-                    flash("⚠️ Ya existe una reserva activa en esa sala, fecha y turno.", "warning")
+                    flash("Ya existe una reserva activa en esa sala, fecha y turno.", "warning")
                 else:
                     # Actualizar la reserva (fecha, turno y estado)
                     cursor.execute("""
@@ -1166,7 +1197,7 @@ def abm_reservas():
         LEFT JOIN reserva_participante rp ON r.id_reserva = rp.id_reserva
         WHERE r.estado = 'Activa'
         GROUP BY r.id_reserva
-        ORDER BY r.fecha DESC;
+        ORDER BY r.id_reserva ASC;
     """)
     reservas = cursor.fetchall()
 
@@ -1202,9 +1233,14 @@ def abm_reservas_participantes():
         accion = request.form.get("accion")
         id_reserva = request.form.get("id_reserva")
 
-        # 🔹 Verificar que la reserva exista
+        # ===============================
+        #  VERIFICAR QUE LA RESERVA EXISTA
+        # ===============================
         cursor.execute("""
-            SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha, t.hora_inicio, t.hora_fin, s.capacidad, s.tipo_sala
+            SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha,
+                   t.hora_inicio, t.hora_fin,
+                   s.capacidad, s.tipo_sala,
+                   r.estado
             FROM reserva r
             JOIN turno t ON r.id_turno = t.id_turno
             JOIN sala s ON s.nombre_sala = r.nombre_sala AND s.edificio = r.edificio
@@ -1216,111 +1252,167 @@ def abm_reservas_participantes():
             flash("No existe una reserva con ese ID.", "error")
             return render_template("admin/abm_reservas-participantes.html")
 
-        # 🔹 Eliminar participante
+        estado = reserva_info["estado"].lower()
+
+        # =========================================
+        # BLOQUEAR TODA MODIFICACIÓN SI NO ESTÁ ACTIVA
+        # =========================================
+        if estado != "activa":
+            flash(f"No se pueden modificar los participantes porque la reserva está '{reserva_info['estado']}'.", "warning")
+
+            cursor.execute("""
+                SELECT rp.ci_participante, p.nombre, p.apellido
+                FROM reserva_participante rp
+                JOIN participantes p ON p.ci = rp.ci_participante
+                WHERE rp.id_reserva = %s;
+            """, (id_reserva,))
+            participantes = cursor.fetchall()
+
+            conn.close()
+            return render_template(
+                "admin/abm_reservas-participantes.html",
+                reserva=reserva_info,
+                participantes=participantes
+            )
+
+        # =========================================
+        #  A PARTIR DE ACÁ SOLO SI ESTÁ ACTIVA
+        # =========================================
+
+        # -------------------------
+        # ELIMINAR PARTICIPANTE
+        # -------------------------
         if accion == "eliminar":
             ci = request.form.get("ci_participante")
+
             cursor.execute("""
                 DELETE FROM reserva_participante
                 WHERE id_reserva = %s AND ci_participante = %s;
             """, (id_reserva, ci))
             conn.commit()
-            flash("Participante eliminado correctamente.", "success")
 
-        # 🔹 Agregar participante (con validaciones)
+            # Verificar si quedó vacía
+            cursor.execute("""
+                SELECT COUNT(*) AS cant
+                FROM reserva_participante
+                WHERE id_reserva = %s;
+            """, (id_reserva,))
+            cant = cursor.fetchone()["cant"]
+
+            if cant == 0:
+                cursor.execute("""
+                    UPDATE reserva
+                    SET estado = 'Cancelada'
+                    WHERE id_reserva = %s;
+                """, (id_reserva,))
+                conn.commit()
+
+                flash("Participante eliminado. La reserva quedó vacía y fue cancelada.", "success")
+            else:
+                flash("Participante eliminado correctamente.", "success")
+
+        # -------------------------
+        # AGREGAR PARTICIPANTE
+        # -------------------------
         elif accion == "agregar":
             ci_nuevo = request.form.get("ci_nuevo").strip()
 
-            # Validar formato CI
+            # Validar CI
             if not ci_nuevo.isdigit() or len(ci_nuevo) not in (7, 8):
-                flash("La CI debe tener solo números (7 u 8 dígitos).", "warning")
+                flash("La cédula ingresada debe tener 7 u 8 dígitos", "warning")
+
             else:
                 # Verificar existencia
                 cursor.execute("SELECT ci FROM participantes WHERE ci = %s;", (ci_nuevo,))
-                participante = cursor.fetchone()
+                existe = cursor.fetchone()
 
-                if not participante:
-                    flash("No existe ningún participante con esa CI.", "error")
+                if not existe:
+                    flash("No existe un participante con esa CI", "error")
+
                 else:
-                    # 🔹 Verificar que esté inscripto en un programa académico
+                    # Verificar que esté en programa académico
                     cursor.execute("""
                         SELECT 1
                         FROM participantes_programa_academico
                         WHERE ci_participante = %s;
                     """, (ci_nuevo,))
-                    pertenece_programa = cursor.fetchone()
+                    pertenece = cursor.fetchone()
 
-                    if not pertenece_programa:
-                        flash("El participante no pertenece a ningún programa académico.", "warning")
+                    if not pertenece:
+                        flash("El participante no pertenece a ningún programa académico", "warning")
+
                     else:
-                    
-                        try:
-                            # Tipo de persona
+                        # Tipo de persona
+                        cursor.execute("""
+                            SELECT 
+                                CASE 
+                                    WHEN ppa.rol = 'Docente' THEN 'Docente'
+                                    WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'grado' THEN 'Grado'
+                                    WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'posgrado' THEN 'Posgrado'
+                                END AS tipo_persona
+                            FROM participantes_programa_academico ppa
+                            JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa
+                            WHERE ppa.ci_participante = %s
+                            LIMIT 1;
+                        """, (ci_nuevo,))
+                        tipo_persona = cursor.fetchone()["tipo_persona"]
+
+                        tipo_sala = reserva_info["tipo_sala"]
+
+                        # Restricciones por tipo de sala
+                        if tipo_sala == "Docente" and tipo_persona != "Docente":
+                            flash("Solo docentes pueden usar esta sala", "error")
+
+                        elif tipo_sala == "Posgrado" and tipo_persona != "Posgrado":
+                            flash("Solo estudiantes de posgrado pueden estar en esta sala", "error")
+
+                        else:
+                            # Sanción activa
                             cursor.execute("""
-                                SELECT 
-                                    CASE 
-                                        WHEN ppa.rol = 'Docente' THEN 'Docente'
-                                        WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'grado' THEN 'Grado'
-                                        WHEN ppa.rol = 'Estudiante' AND pa.tipo = 'posgrado' THEN 'Posgrado'
-                                        ELSE 'Desconocido'
-                                    END AS tipo_persona
-                                FROM participantes_programa_academico ppa
-                                JOIN programas_academicos pa ON pa.nombre_programa = ppa.nombre_programa
-                                WHERE ppa.ci_participante = %s
-                                LIMIT 1;
+                                SELECT 1 FROM sancion_participante
+                                WHERE ci_participante = %s
+                                AND CURDATE() BETWEEN fecha_inicio AND fecha_fin
+                                AND activa = 1;
                             """, (ci_nuevo,))
-                            tipo_persona = cursor.fetchone()["tipo_persona"]
+                            sancionado = cursor.fetchone()
 
-                            tipo_sala = reserva_info["tipo_sala"]
+                            if sancionado:
+                                flash("El participante tiene una sanción activa", "error")
 
-                            # Restricciones por tipo de sala
-                            if tipo_sala == "Docente" and tipo_persona != "Docente":
-                                flash("Solo docentes pueden estar en esta sala.", "error")
-                            elif tipo_sala == "Posgrado" and tipo_persona != "Posgrado":
-                                flash("Solo estudiantes de posgrado pueden estar en esta sala", "error")
                             else:
-                                # Sanción activa
+                                # Capacidad
                                 cursor.execute("""
-                                    SELECT 1 FROM sancion_participante
-                                    WHERE ci_participante = %s
-                                    AND CURDATE() BETWEEN fecha_inicio AND fecha_fin;
-                                """, (ci_nuevo,))
-                                sancionado = cursor.fetchone()
+                                    SELECT COUNT(*) AS ocupados
+                                    FROM reserva_participante
+                                    WHERE id_reserva = %s;
+                                """, (id_reserva,))
+                                ocupados = cursor.fetchone()["ocupados"]
 
-                                if sancionado:
-                                    flash("Este participante tiene una sanción activa.", "error")
+                                if ocupados >= reserva_info["capacidad"]:
+                                    flash("La sala está llena.", "warning")
                                 else:
-                                    # Capacidad de la sala
+                                    # Verificar si ya está
                                     cursor.execute("""
-                                        SELECT COUNT(*) AS ocupados
-                                        FROM reserva_participante
-                                        WHERE id_reserva = %s;
-                                    """, (id_reserva,))
-                                    ocupados = cursor.fetchone()["ocupados"]
+                                        SELECT 1 FROM reserva_participante
+                                        WHERE ci_participante = %s AND id_reserva = %s;
+                                    """, (ci_nuevo, id_reserva))
+                                    ya_esta = cursor.fetchone()
 
-                                    if ocupados >= reserva_info["capacidad"]:
-                                        flash("No se puede agregar: sala al límite de capacidad.", "warning")
+                                    if ya_esta:
+                                        flash("Este participante ya está en la reserva", "warning")
                                     else:
-                                        # Verificar si ya está en la reserva
+                                        # Insertar
                                         cursor.execute("""
-                                            SELECT 1 FROM reserva_participante
-                                            WHERE ci_participante = %s AND id_reserva = %s;
+                                            INSERT INTO reserva_participante 
+                                            (ci_participante, id_reserva, fecha_solicitud_reserva, asistencia)
+                                            VALUES (%s, %s, NOW(), TRUE);
                                         """, (ci_nuevo, id_reserva))
-                                        ya_esta = cursor.fetchone()
+                                        conn.commit()
+                                        flash("Participante agregado correctamente", "success")
 
-                                        if ya_esta:
-                                            flash("Ese participante ya está asociado a esta reserva.", "warning")
-                                        else:
-                                            cursor.execute("""
-                                                INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva, asistencia)
-                                                VALUES (%s, %s, NOW(), TRUE);
-                                            """, (ci_nuevo, id_reserva))
-                                            conn.commit()
-                                            flash("Participante agregado correctamente.", "success")
-
-                        except Exception as e:
-                            flash(f"Error al agregar participante: {e}", "error")
-
-        # 🔹 Obtener lista actualizada de participantes
+        # -------------------------
+        # OBTENER PARTICIPANTES
+        # -------------------------
         cursor.execute("""
             SELECT rp.ci_participante, p.nombre, p.apellido
             FROM reserva_participante rp
@@ -1335,6 +1427,7 @@ def abm_reservas_participantes():
         reserva=reserva_info,
         participantes=participantes
     )
+
 
 
 @app.route("/admin/asistencias", methods=["GET", "POST"])
@@ -1353,7 +1446,7 @@ def asistencias():
         accion = request.form.get("accion")
         id_reserva = request.form.get("id_reserva")
 
-        # 🔹 Verificar que la reserva exista
+        # Verificar que la reserva exista
         cursor.execute("""
             SELECT r.id_reserva, r.nombre_sala, r.edificio, r.fecha, 
                    t.hora_inicio, t.hora_fin, s.capacidad, s.tipo_sala
@@ -1368,21 +1461,34 @@ def asistencias():
             flash("No existe una reserva con ese ID.", "error")
             return render_template("admin/asistencias.html")
 
-        # 🔹 Guardar asistencias
+        # ================================
+        # GUARDAR ASISTENCIAS
+        # ================================
         if accion == "guardar":
-            for key, value in request.form.items():
-                if key.startswith("asistencia_"):
-                    ci = key.split("_")[1]
-                    asistencia = 1 if value == "on" else 0
-                    cursor.execute("""
-                        UPDATE reserva_participante
-                        SET asistencia = %s
-                        WHERE id_reserva = %s AND ci_participante = %s;
-                    """, (asistencia, id_reserva, ci))
+            # 1) Obtener lista actual para saber quiénes están en esta reserva
+            cursor.execute("""
+                SELECT ci_participante
+                FROM reserva_participante
+                WHERE id_reserva = %s;
+            """, (id_reserva,))
+            todos = cursor.fetchall()
+
+            # 2) Para cada participante: si no aparece en el form → asistencia = 0
+            for p in todos:
+                ci = p["ci_participante"]
+                checkbox_name = f"asistencia_{ci}"
+                asistencia = 1 if checkbox_name in request.form else 0
+
+                cursor.execute("""
+                    UPDATE reserva_participante
+                    SET asistencia = %s
+                    WHERE id_reserva = %s AND ci_participante = %s;
+                """, (asistencia, id_reserva, ci))
+
             conn.commit()
             flash("Asistencias actualizadas correctamente.", "success")
 
-        # 🔹 Obtener lista actualizada de participantes con asistencia
+        # Obtener lista actualizada para mostrar
         cursor.execute("""
             SELECT rp.ci_participante, p.nombre, p.apellido, rp.asistencia
             FROM reserva_participante rp
@@ -1404,6 +1510,7 @@ def asistencias():
 
 
 
+
 @app.route("/admin/sanciones", methods=["GET", "POST"])
 @login_required
 def abm_sanciones():
@@ -1418,41 +1525,128 @@ def abm_sanciones():
     # ===============================
     if request.method == "POST" and request.form.get("accion") == "agregar":
         ci_participante = request.form["ci_participante"].strip()
-        fecha_inicio = request.form["fecha_inicio"]
+
+        # El inicio SIEMPRE es hoy
+        fecha_inicio_dt = date.today()
+
         fecha_fin = request.form["fecha_fin"]
 
-        # 1️⃣ Validar formato uruguayo
-        if not validar_cedula_uruguaya(ci_participante):
-            flash("La cédula ingresada no es válida según el formato uruguayo.", "error")
+        try:
+            fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Formato de fecha inválido.", "error")
+            return redirect(url_for("abm_sanciones"))
 
-        else:
-            # 2️⃣ Validar existencia en participantes
-            cursor.execute("SELECT * FROM participantes WHERE ci = %s;", (ci_participante,))
-            participante = cursor.fetchone()
+        # NO permitir fecha fin menor que hoy
+        if fecha_fin_dt < fecha_inicio_dt:
+            flash("La fecha de fin no puede ser menor que la fecha de inicio (hoy).", "error")
+            return redirect(url_for("abm_sanciones"))
 
-            if not participante:
-                flash("No existe un participante con esa cédula.", "error")
-            else:
-                # 3️⃣ Validar vínculo académico
+        # Validar CI
+        if not ci_participante.isdigit() or len(ci_participante) not in (7, 8):
+            flash("La cédula ingresada debe tener 7 u 8 dígitos", "warning")
+            return redirect(url_for("abm_sanciones"))
+
+        # Validar existencia del participante
+        cursor.execute("SELECT 1 FROM participantes WHERE ci = %s;", (ci_participante,))
+        participante = cursor.fetchone()
+
+        if not participante:
+            flash("No existe un participante con esa cédula", "error")
+            return redirect(url_for("abm_sanciones"))
+
+        # Validar vínculo académico
+        cursor.execute("""
+            SELECT 1 
+            FROM participantes_programa_academico
+            WHERE ci_participante = %s LIMIT 1;
+        """, (ci_participante,))
+        vinculado = cursor.fetchone()
+
+        if not vinculado:
+            flash("El participante no está vinculado a ningún programa académico", "error")
+            return redirect(url_for("abm_sanciones"))
+
+        # ==========================================================
+        # 1) BUSCAR TODAS LAS SANCIONES QUE SE SUPERPONGAN O TOQUEN
+        # ==========================================================
+        cursor.execute("""
+            SELECT fecha_inicio, fecha_fin
+            FROM sancion_participante
+            WHERE ci_participante = %s
+            AND activa = TRUE
+            AND (
+                (fecha_inicio <= %s AND fecha_fin >= %s)         -- superposición
+                OR fecha_fin = DATE_SUB(%s, INTERVAL 1 DAY)      -- contigua atrás
+                OR fecha_inicio = DATE_ADD(%s, INTERVAL 1 DAY)   -- contigua adelante
+            );
+        """, (
+            ci_participante,
+            fecha_fin_dt,
+            fecha_inicio_dt,
+            fecha_inicio_dt,
+            fecha_fin_dt
+        ))
+
+        sanciones_relacionadas = cursor.fetchall()
+
+        # ==========================================================
+        # 2) SI HAY SANCIONES PARA MERGEAR → FUSIONAR
+        # ==========================================================
+        if sanciones_relacionadas:
+            nuevo_inicio = min([s["fecha_inicio"] for s in sanciones_relacionadas] + [fecha_inicio_dt])
+            nuevo_fin = max([s["fecha_fin"] for s in sanciones_relacionadas] + [fecha_fin_dt])
+
+            try:
                 cursor.execute("""
-                    SELECT 1 FROM participantes_programa_academico
-                    WHERE ci_participante = %s LIMIT 1;
-                """, (ci_participante,))
-                vinculado = cursor.fetchone()
+                    DELETE FROM sancion_participante
+                    WHERE ci_participante = %s
+                    AND activa = TRUE
+                    AND (
+                        (fecha_inicio <= %s AND fecha_fin >= %s)
+                        OR fecha_fin = DATE_SUB(%s, INTERVAL 1 DAY)
+                        OR fecha_inicio = DATE_ADD(%s, INTERVAL 1 DAY)
+                    );
+                """, (
+                    ci_participante,
+                    fecha_fin_dt,
+                    fecha_inicio_dt,
+                    fecha_inicio_dt,
+                    fecha_fin_dt
+                ))
 
-                if not vinculado:
-                    flash("El participante no está vinculado a ningún programa académico.", "error")
-                else:
-                    try:
-                        cursor.execute("""
-                            INSERT INTO sancion_participante (ci_participante, fecha_inicio, fecha_fin)
-                            VALUES (%s, %s, %s);
-                        """, (ci_participante, fecha_inicio, fecha_fin))
-                        conn.commit()
-                        flash("Sanción agregada correctamente.", "success")
-                    except Exception as e:
-                        conn.rollback()
-                        flash(f"Error al agregar sanción: {e}", "error")
+                cursor.execute("""
+                    INSERT INTO sancion_participante (ci_participante, fecha_inicio, fecha_fin)
+                    VALUES (%s, %s, %s);
+                """, (ci_participante, nuevo_inicio, nuevo_fin))
+
+                conn.commit()
+                flash("Sanciones fusionadas correctamente.", "success")
+                return redirect(url_for("abm_sanciones"))
+
+            except Exception as e:
+                conn.rollback()
+                flash(f"Error al mergear sanciones: {e}", "error")
+                return redirect(url_for("abm_sanciones"))
+
+        # ==========================================================
+        # 3) SI NO HUBO MERGE → INSERTAR SANCIÓN NORMAL
+        # ==========================================================
+        try:
+            cursor.execute("""
+                INSERT INTO sancion_participante (ci_participante, fecha_inicio, fecha_fin)
+                VALUES (%s, %s, %s);
+            """, (ci_participante, fecha_inicio_dt, fecha_fin_dt))
+
+            conn.commit()
+            flash("Sanción agregada correctamente.", "success")
+
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error al agregar sanción: {e}", "error")
+
+
+
 
     # ===============================
     # EDITAR SANCIÓN
@@ -1460,9 +1654,22 @@ def abm_sanciones():
 
     if request.method == "POST" and request.form.get("accion") == "editar":
         ci_participante = request.form["ci_participante"]
-        fecha_inicio = request.form["fecha_inicio"]
-        nueva_fecha_fin = request.form["fecha_fin"]
-        nueva_activa = request.form["activa"]  # <-- NUEVO
+        fecha_inicio_str = request.form["fecha_inicio"]  # viene como string
+        nueva_fecha_fin_str = request.form["fecha_fin"]
+        nueva_activa = request.form["activa"]
+
+        # Convertir a date
+        try:
+            fecha_inicio_dt = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+            nueva_fecha_fin_dt = datetime.strptime(nueva_fecha_fin_str, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Formato de fecha inválido.", "error")
+            return redirect(url_for("abm_sanciones"))
+
+        # Validar que la nueva fecha fin NO sea menor que la fecha inicio
+        if nueva_fecha_fin_dt < fecha_inicio_dt:
+            flash("La nueva fecha de fin no puede ser menor que la fecha de inicio.", "error")
+            return redirect(url_for("abm_sanciones"))
 
         try:
             cursor.execute("""
@@ -1470,13 +1677,15 @@ def abm_sanciones():
                 SET fecha_fin = %s,
                     activa = %s
                 WHERE ci_participante = %s AND fecha_inicio = %s;
-            """, (nueva_fecha_fin, nueva_activa, ci_participante, fecha_inicio))
+            """, (nueva_fecha_fin_dt, nueva_activa, ci_participante, fecha_inicio_dt))
             
             conn.commit()
-            flash("Sanción actualizada correctamente.", "success")
+            flash("Sanción actualizada correctamente", "success")
+
         except Exception as e:
             conn.rollback()
             flash(f"Error al modificar sanción: {e}", "error")
+
 
     # ===============================
     # MOSTRAR SOLO ACTIVAS
@@ -1490,20 +1699,23 @@ def abm_sanciones():
             sp.fecha_fin,
             sp.activa,
             CASE
-                WHEN CURDATE() BETWEEN sp.fecha_inicio AND sp.fecha_fin
-                    THEN 'Activa'
-                ELSE 'Expirada'
+                WHEN CURDATE() < sp.fecha_inicio THEN 'Pendiente'
+                WHEN CURDATE() BETWEEN sp.fecha_inicio AND sp.fecha_fin THEN 'Activa'
             END AS estado
         FROM sancion_participante sp
         JOIN participantes p ON p.ci = sp.ci_participante
+        WHERE sp.activa = TRUE
+        AND sp.fecha_fin >= CURDATE()
         ORDER BY sp.fecha_inicio DESC;
+
     """)
+
     sanciones = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    return render_template("admin/abm_sanciones.html", usuario=current_user, sanciones=sanciones)
+    return render_template("admin/abm_sanciones.html", usuario=current_user, sanciones=sanciones, hoy=date.today())
 
 
 
