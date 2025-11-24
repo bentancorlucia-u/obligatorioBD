@@ -1455,7 +1455,7 @@ def abm_reservas_participantes():
             SELECT rp.ci_participante, p.nombre, p.apellido
             FROM reserva_participante rp
             JOIN participantes p ON p.ci = rp.ci_participante
-            WHERE rp.id_reserva = %s;
+            WHERE rp.id_reserva = %s AND confirmado=1;
         """, (id_reserva,))
         participantes = cursor.fetchall()
 
