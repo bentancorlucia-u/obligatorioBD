@@ -256,8 +256,8 @@ VALUES ('Sala B1','Edificio Semprún','2025-11-20',1,'Activa');
 
 -- 4–5) Bloque consecutivo sin asistencia
 INSERT INTO reserva(nombre_sala, edificio, fecha, id_turno, estado)
-VALUES ('Sala C1','Edificio San Ignacio','2025-11-20',1,'Activa'),
-       ('Sala C1','Edificio San Ignacio','2025-11-20',2,'Activa');
+VALUES ('Sala C1','Edificio San José','2025-11-20',1,'Activa'),
+       ('Sala C1','Edificio San José','2025-11-20',2,'Activa');
 
 
 -- ==========================================================
