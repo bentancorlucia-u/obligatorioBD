@@ -1502,28 +1502,34 @@ def asistencias():
             flash("No existe una reserva con ese ID.", "error")
             return render_template("admin/asistencias.html")
 
-       # ============================================
-        # CALCULAR SI ES EDITABLE (10 min luego de fin)
-        # ============================================
+        estado = reserva_info["estado"].lower()
 
-        fecha = reserva_info["fecha"]
-        hora_fin_raw = reserva_info["hora_fin"]
-
-        # Si MySQL devolvió un timedelta → convertirlo a time válido
-        if isinstance(hora_fin_raw, timedelta):
-            total_seconds = int(hora_fin_raw.total_seconds())
-            horas = total_seconds // 3600
-            minutos = (total_seconds % 3600) // 60
-            segundos = total_seconds % 60
-            hora_fin = time(horas, minutos, segundos)
+        # =============================
+        # BLOQUEAR POR ESTADO
+        # =============================
+        if estado != "activa":
+            editable = False
         else:
-            hora_fin = hora_fin_raw  # ya es time
+            # =============================
+            # BLOQUEAR POR TIEMPO (10 MIN)
+            # =============================
+            fecha = reserva_info["fecha"]
+            hora_fin_raw = reserva_info["hora_fin"]
 
-        dt_fin = datetime.combine(fecha, hora_fin)
-        limite = dt_fin + timedelta(minutes=10)
-        ahora = datetime.now()
+            if isinstance(hora_fin_raw, timedelta):
+                total_seconds = int(hora_fin_raw.total_seconds())
+                horas = total_seconds // 3600
+                minutos = (total_seconds % 3600) // 60
+                segundos = total_seconds % 60
+                hora_fin = time(horas, minutos, segundos)
+            else:
+                hora_fin = hora_fin_raw
 
-        editable = ahora <= limite
+            dt_fin = datetime.combine(fecha, hora_fin)
+            limite = dt_fin + timedelta(minutes=10)
+            ahora = datetime.now()
+
+            editable = ahora <= limite
 
 
         # ============================================
