@@ -79,101 +79,105 @@
     </thead>
 
     <tbody>
-        {% for p in participantes %}
-        {% set es_admin = (p.email == "administrativo@ucu.edu.uy") %}
-        <tr>
-            <form method="POST" action="{{ url_for('abm_participantes') }}">
-                
-                <!-- CI -->
-                <td>
-                    <input type="text" name="ci" value="{{ p.ci }}"
-                           readonly class="input-tabla readonly">
-                </td>
+{% for p in participantes %}
+{% set es_admin = (p.email == "administrativo@ucu.edu.uy") %}
+<tr>
+    <form method="POST" action="{{ url_for('abm_participantes') }}">
 
-                <!-- Nombre -->
-                <td>
-                    <input type="text" name="nombre"
-                           value="{{ p.nombre }}" class="input-tabla">
-                </td>
+        <!-- CI -->
+        <td>
+            <input type="text" name="ci" value="{{ p.ci }}" readonly class="input-tabla readonly">
+        </td>
 
-                <!-- Apellido -->
-                <td>
-                    <input type="text" name="apellido"
-                           value="{{ p.apellido }}" class="input-tabla">
-                </td>
+        <!-- Nombre -->
+        <td>
+            <input type="text" name="nombre"
+                   value="{{ p.nombre }}"
+                   class="input-tabla"
+                   {% if es_admin %}disabled{% endif %}>
+        </td>
 
-                <!-- Email -->
-                <td>
-                    <input type="email" name="email"
-                           value="{{ p.email }}" class="input-tabla">
-                </td>
+        <!-- Apellido -->
+        <td>
+            <input type="text" name="apellido"
+                   value="{{ p.apellido }}"
+                   class="input-tabla"
+                   {% if es_admin %}disabled{% endif %}>
+        </td>
 
-                <!-- FACULTAD (NO EDITABLE) -->
-                <td>
-                    {% if p.facultad %}
-                        <input type="text"
-                            value="{{ p.facultad }}"
-                            readonly
-                            class="input-tabla readonly">
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
+        <!-- Email -->
+        <td>
+            <input type="email" name="email"
+                   value="{{ p.email }}"
+                   class="input-tabla"
+                   {% if es_admin %}disabled{% endif %}>
+        </td>
 
+        <!-- FACULTAD -->
+        <td>
+            {% if p.facultad %}
+                <input type="text" value="{{ p.facultad }}"
+                       class="input-tabla readonly"
+                       readonly>
+            {% else %}
+                -
+            {% endif %}
+        </td>
 
+        <!-- CARRERA -->
+        <td>
+            {% if es_admin %}
+                -
+            {% else %}
+                <select name="programa" class="input-tabla" style="width: 220px;">
+                    {% for prog in programas_por_facultad[p.facultad] %}
+                        <option value="{{ prog }}"
+                            {% if prog == p.nombre_programa %}selected{% endif %}>
+                            {{ prog }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+        </td>
 
-                <!-- CARRERA (editable dentro de la misma facultad) -->
-                <td>
-                    {% if es_admin %}
-                        -
-                    {% else %}
-                        <select name="programa" class="input-tabla"
-                                style="width: 220px;">
-                            {% for prog in programas_por_facultad[p.facultad] %}
-                                <option value="{{ prog }}"
-                                    {% if prog == p.nombre_programa %}selected{% endif %}>
-                                    {{ prog }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    {% endif %}
-                </td>
+        <!-- ROL -->
+        <td>
+            {% if es_admin %}
+                -
+            {% else %}
+                <select name="rol" class="input-tabla">
+                    <option value="estudiante"
+                        {% if (p.rol or '')|lower == "estudiante" %}selected{% endif %}>
+                        Estudiante
+                    </option>
 
-                <!-- ROL -->
-                <td>
-                    {% if es_admin %}
-                        -
-                    {% else %}
-                        <select name="rol" class="input-tabla">
-                            <option value="estudiante"
-                                {% if p.rol|lower == "estudiante" %}selected{% endif %}>
-                                Estudiante
-                            </option>
+                    <option value="docente"
+                        {% if (p.rol or '')|lower == "docente" %}selected{% endif %}>
+                        Docente
+                    </option>
+                </select>
+            {% endif %}
+        </td>
 
-                            <option value="docente"
-                                {% if p.rol|lower == "docente" %}selected{% endif %}>
-                                Docente
-                            </option>
-                        </select>
-                    {% endif %}
-                </td>
+        <!-- ACCIONES -->
+        <td class="acciones">
+            {% if not es_admin %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" name="accion" value="editar" class="btn-editar">Editar</button>
 
-                <!-- ACCIONES -->
-                <td class="acciones">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" name="accion" value="editar"
-                            class="btn-editar">Editar</button>
-                    <button type="submit" name="accion" value="eliminar"
-                            class="btn-eliminar"
-                            onclick="return confirm('¿Eliminar a {{ p.nombre }} {{ p.apellido }}?');">
-                        Eliminar
-                    </button>
-                </td>
+                <button type="submit" name="accion" value="eliminar"
+                        class="btn-eliminar"
+                        onclick="return confirm('¿Eliminar a {{ p.nombre }} {{ p.apellido }}?');">
+                    Eliminar
+                </button>
+            {% endif %}
+        </td>
 
-            </form>
-        </tr>
-        {% endfor %}
-    </tbody>
+    </form>
+</tr>
+{% endfor %}
+</tbody>
+
 </table>
 {% else %}
 <p>No hay participantes registrados.</p>
