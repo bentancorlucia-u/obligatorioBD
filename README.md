@@ -62,3 +62,6 @@ Al iniciar el contenedor de base de datos se ejecutan automáticamente los scrip
 ## Resolución de problemas
 - Verifica que las variables de entorno coincidan con los usuarios creados en los scripts de `sql/` si encuentras errores de autenticación contra la base de datos.
 - Si necesitas reconstruir las imágenes tras modificar dependencias o scripts SQL, ejecuta `docker compose build --no-cache` seguido de `docker compose up`.
+
+## Gracias!
+- Lucía Bentancor & Bianca Villalba
