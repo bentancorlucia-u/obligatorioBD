@@ -120,41 +120,6 @@ BEGIN
 
 END $$
 
-
-/* =====================================================================
-   TRIGGER 4 — ASIGNAR AUTOMÁTICAMENTE DESDE LISTA DE ESPERA
-   ===================================================================== */
-CREATE TRIGGER trg_lista_espera_asignacion
-AFTER DELETE ON reserva_participante
-FOR EACH ROW
-BEGIN
-    DECLARE siguiente_ci CHAR(8);
-
-    SELECT ci_participante
-    INTO siguiente_ci
-    FROM lista_espera
-    WHERE id_reserva = OLD.id_reserva
-    ORDER BY fecha ASC
-    LIMIT 1;
-
-    IF siguiente_ci IS NOT NULL THEN
-
-        INSERT INTO reserva_participante (ci_participante, id_reserva, fecha_solicitud_reserva)
-        VALUES (siguiente_ci, OLD.id_reserva, CURDATE());
-
-        DELETE FROM lista_espera
-        WHERE ci_participante = siguiente_ci
-          AND id_reserva = OLD.id_reserva
-        LIMIT 1;
-
-        INSERT INTO notificacion (ci_participante, mensaje)
-        VALUES (
-            siguiente_ci,
-            CONCAT('Entraste automáticamente a la reserva #', OLD.id_reserva)
-        );
-    END IF;
-END $$
-
 DELIMITER ;
 
 

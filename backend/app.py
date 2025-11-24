@@ -859,7 +859,7 @@ def abm_salas():
             WHERE nombre_sala = %s AND edificio = %s;
         """, (nombre_sala, edificio))
         conn.commit()
-        flash("Sala eliminada correctamente.", "info")
+        flash("Sala eliminada correctamente", "success")
 
     # =========================================
     # EDITAR
@@ -883,12 +883,13 @@ def abm_salas():
                 UPDATE sala
                 SET capacidad = %s, tipo_sala = %s
                 WHERE nombre_sala = %s AND edificio = %s;
-            """, (nueva_capacidad, nuevo_tipo, nombre_sala, edificio))
+            """, (capacidad, nuevo_tipo, nombre_sala, edificio))
             conn.commit()
             flash("Sala modificada correctamente.", "success")
         except Exception as e:
             conn.rollback()
             flash(f"Error al modificar sala: {e}", "error")
+
 
 
     # =========================================
