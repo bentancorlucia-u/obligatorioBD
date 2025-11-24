@@ -65,9 +65,9 @@ Al iniciar el contenedor de base de datos se ejecutan automáticamente los scrip
 
 ## Usuarios Ejemplo
 
-administrativo@ucu.edu.uy // Admin1234-- (Admin)
-jrodriguez@ucu.edu.uy // Docente123** (Docente)
-ana.perez@correo.ucu.edu.uy // AnaP1234- (Estudiante)
+- administrativo@ucu.edu.uy // Admin1234-- (Admin)
+- jrodriguez@ucu.edu.uy // Docente123** (Docente)
+- ana.perez@correo.ucu.edu.uy // AnaP1234- (Estudiante)
 
 ## Gracias!
 - Lucía Bentancor & Bianca Villalba
